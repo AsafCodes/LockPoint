@@ -7,7 +7,7 @@ echo "🔧 LockPoint Alpha — Starting up..."
 npx prisma db push --skip-generate 2>/dev/null || true
 
 # Check if the database is empty (no users = first run)
-USER_COUNT=$(npx prisma db execute --stdin <<< "SELECT COUNT(*) as c FROM User;" 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+USER_COUNT=$(echo "SELECT COUNT(*) as c FROM User;" | npx prisma db execute --stdin 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
 
 if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
     echo "🌱 First run detected — seeding database..."
