@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// LockPoint — Military Attendance System Schema
+// ─────────────────────────────────────────────────────────────
+
+/// Organizational unit (hierarchy: command → brigade → battalion → company → platoon → squad)
+model Unit {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // command | brigade | battalion | company | platoon | squad
+  parentId    String?
+  parent      Unit?    @relation("UnitHierarchy", fields: [parentId], references: [id])
+  children    Unit[]   @relation("UnitHierarchy")
+  commanderId String?
+  commander   User?    @relation("UnitCommander", fields: [commanderId], references: [id])
+  soldiers    User[]   @relation("UnitMembers")
+  zones       GeofenceZone[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// System user — soldier, commander, or senior_commander
+model User {
+  id              String   @id @default(cuid())
+  serviceNumber   String   @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            String   // soldier | commander | senior_commander
+  rankCode        String
+  rankLabel       String
+  rankLevel       Int
+  unitId          String
+  unit            Unit     @relation("UnitMembers", fields: [unitId], references: [id])
+  commandedUnits  Unit[]   @relation("UnitCommander")
+  email           String?
+  phone           String?
+
+  // Soldier-specific location data
+  currentStatus       String   @default("unknown") // in_base | out_of_base | unknown
+  lastKnownLat        Float?
+  lastKnownLng        Float?
+  lastLocationUpdate  DateTime?
+
+  // Relations
+  geofenceEvents GeofenceEvent[]
+  exitReports    ExitReport[]
+  auditLogs      AuditLog[]
+  refreshTokens  RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Refresh token for JWT rotation
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+/// Geofence zone definition
+model GeofenceZone {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  shapeType   String   // circle | polygon
+  centerLat   Float?
+  centerLng   Float?
+  radiusMeters Float?
+  vertices    String?  // JSON-encoded LatLng[] for polygons
+  isActive    Boolean  @default(true)
+  unitId      String
+  unit        Unit     @relation(fields: [unitId], references: [id])
+  createdBy   String
+  events      GeofenceEvent[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Geofence transition event
+model GeofenceEvent {
+  id          String   @id @default(cuid())
+  soldierId   String
+  soldier     User     @relation(fields: [soldierId], references: [id])
+  zoneId      String
+  zone        GeofenceZone @relation(fields: [zoneId], references: [id])
+  transition  String   // ENTER | EXIT | STAY
+  lat         Float
+  lng         Float
+  accuracy    Float    // GPS accuracy in meters
+  batteryLevel Int?
+  exitReport  ExitReport?
+  timestamp   DateTime @default(now())
+}
+
+/// Exit report — soldier's "where to?" submission
+model ExitReport {
+  id              String   @id @default(cuid())
+  soldierId       String
+  soldier         User     @relation(fields: [soldierId], references: [id])
+  eventId         String   @unique
+  event           GeofenceEvent @relation(fields: [eventId], references: [id])
+  destination     String
+  reason          String   // personal_leave | medical | official_duty | training | emergency | other
+  freeText        String?
+  estimatedReturn DateTime?
+  createdAt       DateTime @default(now())
+}
+
+/// Immutable audit log — forensic record of every action
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // LOGIN | LOGOUT | CREATE_ZONE | UPDATE_STATUS | SUBMIT_REPORT | etc.
+  resource  String?  // affected resource type
+  resourceId String? // affected resource ID
+  detail    String?  // JSON metadata
+  ipAddress String?
+  userAgent String?
+  timestamp DateTime @default(now())
+}

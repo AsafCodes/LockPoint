@@ -1,0 +1,122 @@
+'use client';
+
+// ─────────────────────────────────────────────────────────────
+// LockPoint — Sidebar Navigation (Desktop-only, Hebrew RTL)
+// ─────────────────────────────────────────────────────────────
+
+import { useAuth } from '@/providers/AuthProvider';
+import { cn } from '@/shared/utils/cn';
+import { ROUTES } from '@/lib/constants';
+import { t } from '@/lib/i18n';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+
+interface SidebarProps {
+    onClose: () => void;
+}
+
+const NAV_ITEMS = {
+    soldier: [
+        { label: t.nav.myStatus, href: ROUTES.SOLDIER, icon: '◉' },
+    ],
+    commander: [
+        { label: t.nav.dashboard, href: ROUTES.COMMANDER, icon: '◫' },
+    ],
+    senior_commander: [
+        { label: t.nav.overview, href: ROUTES.SENIOR, icon: '◈' },
+        { label: t.nav.geofence, href: `${ROUTES.SENIOR}?tab=geofence`, icon: '⬡' },
+    ],
+};
+
+export function Sidebar({ onClose }: SidebarProps) {
+    const { user, logout } = useAuth();
+    const pathname = usePathname();
+    const router = useRouter();
+
+    const handleLogout = () => {
+        logout();
+        router.push('/');
+    };
+
+    if (!user) return null;
+
+    const items = NAV_ITEMS[user.role] || [];
+
+    return (
+        <div className="flex flex-col h-full bg-onyx border-e border-border-subtle">
+            {/* Logo */}
+            <div className="flex items-center h-14 px-4 border-b border-border-subtle">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-signal-green/10 flex items-center justify-center">
+                        <span className="text-signal-green font-bold text-sm">LP</span>
+                    </div>
+                    <div>
+                        <h1 className="text-sm font-bold text-text-primary tracking-wide">{t.app.name}</h1>
+                        <p className="text-[10px] text-text-muted">{t.app.subtitle}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* User info */}
+            <div className="px-4 py-4 border-b border-border-subtle">
+                <div className="glass-panel p-3">
+                    <p className="text-xs text-text-muted mb-1">{user.rank.label}</p>
+                    <p className="text-sm font-semibold text-text-primary">
+                        {user.firstName} {user.lastName}
+                    </p>
+                    <p className="data-mono text-xs text-text-muted mt-1">{t.soldierCard.sn} {user.serviceNumber}</p>
+                    <div className="flex items-center gap-1.5 mt-2">
+                        <div className={cn(
+                            'w-2 h-2 rounded-full',
+                            user.role === 'soldier' ? 'bg-signal-green dot-pulse-green' : 'bg-info-blue'
+                        )} />
+                        <span className="text-xs text-text-secondary">
+                            {t.roles[user.role]}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-widest text-text-muted">
+                    {t.nav.navigation}
+                </p>
+                {items.map((item) => {
+                    const hrefPath = item.href.split('?')[0];
+                    const hasQuery = item.href.includes('?');
+                    const active = hasQuery
+                        ? pathname === hrefPath && typeof window !== 'undefined' && window.location.search === '?' + item.href.split('?')[1]
+                        : pathname === item.href && (typeof window === 'undefined' || !window.location.search);
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={onClose}
+                            className={cn(
+                                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 touch-target',
+                                active
+                                    ? 'bg-signal-green/10 text-signal-green border border-signal-green/20'
+                                    : 'text-text-secondary hover:bg-slate-dark hover:text-text-primary'
+                            )}
+                        >
+                            <span className="text-base">{item.icon}</span>
+                            <span>{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Logout */}
+            <div className="p-3 border-t border-border-subtle">
+                <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-danger-red/80 hover:bg-danger-red/10 hover:text-danger-red transition-all touch-target"
+                >
+                    <span>⏻</span>
+                    <span>{t.auth.signOut}</span>
+                </button>
+            </div>
+        </div>
+    );
+}

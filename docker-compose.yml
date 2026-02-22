@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────
+# LockPoint Alpha — Docker Compose
+# Run locally: docker compose up --build
+# ─────────────────────────────────────────────────────────────
+
+services:
+  lockpoint:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./prisma/lockpoint.db
+    volumes:
+      # Persist the SQLite database between container restarts
+      - lockpoint-data:/app/prisma
+    restart: unless-stopped
+
+volumes:
+  lockpoint-data:
+    driver: local

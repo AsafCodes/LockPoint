@@ -1,0 +1,25 @@
+# ─────────────────────────────────────────────────────────────
+# LockPoint Alpha — Render.com Blueprint
+# Deploy: Connect GitHub repo → Render auto-detects this file
+# Free tier: https://render.com/pricing
+# ─────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: lockpoint-alpha
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:./prisma/lockpoint.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+    disk:
+      name: lockpoint-data
+      mountPath: /app/prisma
+      sizeGB: 1

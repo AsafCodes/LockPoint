@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   LockPoint — Tactical Design System (RTL + Mobile-First)
+   ───────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Tactical Color Palette */
+  --color-midnight: #0a0e17;
+  --color-onyx: #141820;
+  --color-slate-dark: #1c2030;
+  --color-slate-mid: #2a2f40;
+  --color-slate-light: #3a4058;
+  --color-signal-green: #00e676;
+  --color-warning-amber: #ffab00;
+  --color-danger-red: #ff1744;
+  --color-info-blue: #448aff;
+  --color-text-primary: #e8eaed;
+  --color-text-secondary: #9aa0b0;
+  --color-text-muted: #5a6070;
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-active: rgba(255, 255, 255, 0.12);
+
+  /* Tactical Fonts */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans: 'Noto Sans Hebrew', 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Command breakpoint */
+  --breakpoint-command: 1920px;
+}
+
+/* ── Base Reset ─────────────────────────────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-mid) transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-midnight);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Safe Area (iOS notch / Android gesture bar) ───────────── */
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ── Mobile Touch Targets ──────────────────────────────────── */
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ── Tactical Utilities ─────────────────────────────────────── */
+
+.glass-panel {
+  background: linear-gradient(135deg, rgba(20, 24, 32, 0.8), rgba(28, 32, 48, 0.6));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+}
+
+.glass-panel-hover:hover {
+  border-color: var(--color-border-active);
+  background: linear-gradient(135deg, rgba(20, 24, 32, 0.9), rgba(28, 32, 48, 0.7));
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.15), 0 0 40px rgba(0, 230, 118, 0.05);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px rgba(255, 171, 0, 0.15), 0 0 40px rgba(255, 171, 0, 0.05);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.15), 0 0 40px rgba(255, 23, 68, 0.05);
+}
+
+/* ── Pulse Animations ───────────────────────────────────────── */
+
+@keyframes pulse-green {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 230, 118, 0);
+  }
+}
+
+@keyframes pulse-amber {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 171, 0, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 171, 0, 0);
+  }
+}
+
+@keyframes pulse-red {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 23, 68, 0);
+  }
+}
+
+.dot-pulse-green {
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.dot-pulse-amber {
+  animation: pulse-amber 2s ease-in-out infinite;
+}
+
+.dot-pulse-red {
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+/* ── Tactical Overlay ───────────────────────────────────────── */
+
+@keyframes overlay-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes warning-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.overlay-enter {
+  animation: overlay-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.warning-flash {
+  animation: warning-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Mono Data ──────────────────────────────────────────────── */
+
+.data-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-slate-mid);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate-light);
+}
+
+/* ── Bottom Nav Clearance ──────────────────────────────────── */
+
+.pb-bottomnav {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .pb-bottomnav {
+    padding-bottom: 0;
+  }
+}
