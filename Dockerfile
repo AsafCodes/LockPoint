@@ -34,39 +34,34 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# 1. קריטי ל-Alpine: התקנת Bash כדי שיוכל להריץ את ה-entrypoint
 RUN apk add --no-cache bash
 
-# הגדרת משתמש מערכת
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# העתקת קבצי ה-Standalone (Next.js)
+# העתקת קבצי ה-Standalone
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-# יצירת תיקייה לבסיס הנתונים עם הרשאות נכונות
+# --- השורה החדשה והקריטית ---
+COPY --from=builder /app/node_modules ./node_modules
+# ----------------------------
+
 RUN mkdir -p /app/prisma && chown -R nextjs:nodejs /app/prisma
 
-# 2. טיפול ב-Entrypoint (מבוצע כ-root לפני החלפת משתמש)
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chown nextjs:nodejs /usr/local/bin/docker-entrypoint.sh
 
-# התקנת tsx גלובלית להרצת ה-seed
 RUN npm install -g tsx
 
-# מעבר למשתמש המאובטח
 USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# הרצה דרך Bash באופן מפורש
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/docker-entrypoint.sh"]
