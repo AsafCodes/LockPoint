@@ -51,8 +51,7 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 # Copy seed script and auth utilities for database initialization
 COPY --from=builder /app/src/lib/auth/password.ts ./src/lib/auth/password.ts
 
-# Copy the .env file for runtime
-COPY .env .env
+# (Environment variables are provided natively by Render)
 
 # Create directory for SQLite database with proper permissions
 RUN mkdir -p /app/prisma && chown -R nextjs:nodejs /app
