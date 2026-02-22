@@ -19,7 +19,3 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-    disk:
-      name: lockpoint-data
-      mountPath: /app/prisma
-      sizeGB: 1
