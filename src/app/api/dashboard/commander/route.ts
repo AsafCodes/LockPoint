@@ -46,6 +46,16 @@ export const GET = withRole(['commander', 'senior_commander'], async (req: NextR
         take: 20,
     });
 
+    // Get active geofence zones for the map
+    const zones = await prisma.geofenceZone.findMany({
+        where: { unitId: { in: unitIds } },
+        select: {
+            id: true, name: true, shapeType: true,
+            centerLat: true, centerLng: true, radiusMeters: true,
+            isActive: true,
+        },
+    });
+
     // Aggregation
     const inBase = soldiers.filter((s: any) => s.currentStatus === 'in_base').length;
     const outOfBase = soldiers.filter((s: any) => s.currentStatus === 'out_of_base').length;
@@ -66,6 +76,7 @@ export const GET = withRole(['commander', 'senior_commander'], async (req: NextR
             unitName: s.unit.name,
         })),
         units: units.map((u: any) => ({ ...u, children: [], stats: null })),
+        zones,
         events: events.map((e: any) => ({
             id: e.id,
             soldierId: e.soldierId,

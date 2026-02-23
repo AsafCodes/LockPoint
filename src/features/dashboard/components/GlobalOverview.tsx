@@ -11,20 +11,25 @@ import { cn } from '@/shared/utils/cn';
 import { t } from '@/lib/i18n';
 import type { OrgNode } from '@/features/hierarchy/types';
 import { useSeniorDashboard } from '@/lib/api/hooks';
+import { DynamicTacticalMap } from '@/features/map';
+import { apiClient } from '@/lib/api/client';
+import { useQuery } from '@tanstack/react-query';
 
-// Demo data removed - using real API
+// Demo data removed - using real API from /api/zones
 
-// ── Demo geofence zones ─────────────────────────────────────
-
-const DEMO_ZONES = [
-    { id: 'zone-1', name: 'מחנה אלפא — היקף ראשי', type: 'circle' as const, radius: 500, lat: 32.08, lng: 34.78, active: true },
-    { id: 'zone-2', name: 'שטח אימונים בראבו', type: 'circle' as const, radius: 300, lat: 32.10, lng: 34.80, active: true },
-    { id: 'zone-3', name: 'מחסן אספקה צ\'ארלי', type: 'circle' as const, radius: 150, lat: 32.07, lng: 34.77, active: false },
-];
 
 // ── Geofence Management View ────────────────────────────────
 
 function GeofenceManagementView() {
+    // Fetch real zones from API
+    const { data: zones, isLoading } = useQuery({
+        queryKey: ['zones'],
+        queryFn: () => apiClient.get<any[]>('/zones'),
+    });
+
+    const activeZones = (zones || []).filter((z: any) => z.isActive);
+    const allZones = zones || [];
+
     return (
         <div className="space-y-4 md:space-y-6">
             {/* Header */}
@@ -38,15 +43,14 @@ function GeofenceManagementView() {
                 </button>
             </div>
 
-            {/* Map placeholder */}
+            {/* Live Map */}
             <TacticalCard>
-                <div className="h-56 md:h-80 rounded-lg bg-slate-dark flex items-center justify-center border border-border-subtle">
-                    <div className="text-center">
-                        <p className="text-5xl mb-3">🗺️</p>
-                        <p className="text-sm text-text-primary font-medium">{t.geofenceMgmt.mapTitle}</p>
-                        <p className="text-xs text-text-muted mt-1">{t.geofenceMgmt.mapSubtitle}</p>
-                    </div>
-                </div>
+                <h3 className="text-sm font-semibold text-text-primary mb-3">{t.geofenceMgmt.mapTitle}</h3>
+                <DynamicTacticalMap
+                    soldiers={[]}
+                    zones={allZones}
+                    height="350px"
+                />
             </TacticalCard>
 
             {/* Active Zones — Table on desktop, Cards on mobile */}
@@ -55,21 +59,21 @@ function GeofenceManagementView() {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
-                    {DEMO_ZONES.map((zone) => (
+                    {allZones.map((zone: any) => (
                         <div key={zone.id} className="p-3 rounded-lg bg-slate-dark/50 border border-border-subtle/50 space-y-2">
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-text-primary font-medium">{zone.name}</span>
                                 <span className={cn(
                                     'inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded',
-                                    zone.active ? 'bg-signal-green/10 text-signal-green' : 'bg-slate-500/10 text-slate-400'
+                                    zone.isActive ? 'bg-signal-green/10 text-signal-green' : 'bg-slate-500/10 text-slate-400'
                                 )}>
-                                    <span className={cn('w-1.5 h-1.5 rounded-full', zone.active ? 'bg-signal-green' : 'bg-slate-500')} />
-                                    {zone.active ? t.status.active : t.status.inactive}
+                                    <span className={cn('w-1.5 h-1.5 rounded-full', zone.isActive ? 'bg-signal-green' : 'bg-slate-500')} />
+                                    {zone.isActive ? t.status.active : t.status.inactive}
                                 </span>
                             </div>
                             <div className="flex gap-4 text-xs text-text-muted">
-                                <span>{t.geofenceMgmt.type}: <span className="text-info-blue">{zone.type}</span></span>
-                                <span>{t.soldier.radius}: <span className="data-mono text-text-secondary">{zone.radius}m</span></span>
+                                <span>{t.geofenceMgmt.type}: <span className="text-info-blue">{zone.shapeType}</span></span>
+                                <span>{t.soldier.radius}: <span className="data-mono text-text-secondary">{zone.radiusMeters}m</span></span>
                             </div>
                             <div className="flex gap-2 pt-1">
                                 <button className="text-xs px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary touch-target">
@@ -97,25 +101,25 @@ function GeofenceManagementView() {
                             </tr>
                         </thead>
                         <tbody>
-                            {DEMO_ZONES.map((zone) => (
+                            {allZones.map((zone: any) => (
                                 <tr key={zone.id} className="border-b border-border-subtle/50">
                                     <td className="px-4 py-3 text-sm text-text-primary font-medium">{zone.name}</td>
                                     <td className="px-4 py-3">
                                         <span className="text-xs px-2 py-1 rounded bg-info-blue/10 text-info-blue uppercase tracking-wider font-medium">
-                                            {zone.type}
+                                            {zone.shapeType}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-text-secondary data-mono">{zone.radius}</td>
+                                    <td className="px-4 py-3 text-sm text-text-secondary data-mono">{zone.radiusMeters}</td>
                                     <td className="px-4 py-3 text-xs text-text-muted data-mono">
-                                        {zone.lat.toFixed(4)}, {zone.lng.toFixed(4)}
+                                        {zone.centerLat?.toFixed(4)}, {zone.centerLng?.toFixed(4)}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <span className={cn(
                                             'inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded',
-                                            zone.active ? 'bg-signal-green/10 text-signal-green' : 'bg-slate-500/10 text-slate-400'
+                                            zone.isActive ? 'bg-signal-green/10 text-signal-green' : 'bg-slate-500/10 text-slate-400'
                                         )}>
-                                            <span className={cn('w-1.5 h-1.5 rounded-full', zone.active ? 'bg-signal-green' : 'bg-slate-500')} />
-                                            {zone.active ? t.status.active : t.status.inactive}
+                                            <span className={cn('w-1.5 h-1.5 rounded-full', zone.isActive ? 'bg-signal-green' : 'bg-slate-500')} />
+                                            {zone.isActive ? t.status.active : t.status.inactive}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">

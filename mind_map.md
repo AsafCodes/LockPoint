@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-23 (v0.2.0)
+> Updated: 2026-02-23 (v0.3.0)
 
 ---
 
@@ -41,15 +41,27 @@
 
 ---
 
+## v0.3.0-Alpha — Live Tactical Map ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **TacticalMap (Leaflet Dark)** | ✅ Done | `src/features/map/components/TacticalMap.tsx` |
+| **SSR-safe Dynamic Loader** | ✅ Done | `src/features/map/components/DynamicTacticalMap.tsx` |
+| **Commander Map Integration** | ✅ Done | `src/features/dashboard/components/CommanderDashboard.tsx` |
+| **Geofence Mgmt Map** | ✅ Done | `src/features/dashboard/components/GlobalOverview.tsx` |
+| **Commander API — zones** | ✅ Done | `src/app/api/dashboard/commander/route.ts` |
+| **Version Bump to v0.3.0** | ✅ Done | `package.json` |
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |
 |---------|----------|---------|
-| Push Notifications (exit alerts) | 🔴 High | v0.3.0 |
-| Leaflet Map View (commander) | 🟡 Medium | v0.3.0 |
-| PostgreSQL Migration | 🟡 Medium | v0.3.0 |
-| Password Reset / First Login | 🟢 Low | v0.4.0 |
-| Export PDF/Excel Reports | 🟢 Low | v0.4.0 |
-| Admin Panel (user management) | 🟢 Low | v0.4.0 |
-| Background Location (Capacitor) | 🟡 Medium | v0.5.0 |
-| Offline Mode + Sync | 🟢 Low | v0.5.0 |
+| Push Notifications (exit alerts) | 🔴 High | v0.4.0 |
+| PostgreSQL Migration | 🟡 Medium | v0.4.0 |
+| Password Reset / First Login | 🟢 Low | v0.5.0 |
+| Export PDF/Excel Reports | 🟢 Low | v0.5.0 |
+| Admin Panel (user management) | 🟢 Low | v0.5.0 |
+| Background Location (Capacitor) | 🟡 Medium | v0.6.0 |
+| Offline Mode + Sync | 🟢 Low | v0.6.0 |

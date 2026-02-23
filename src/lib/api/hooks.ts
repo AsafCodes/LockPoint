@@ -15,6 +15,7 @@ export interface CommanderDashboardResponse {
     stats: DashboardStats;
     soldiers: Soldier[];
     units: OrgNode[];
+    zones: any[];
     events: any[];
 }
 
