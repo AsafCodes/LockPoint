@@ -1,20 +1,20 @@
 #!/bin/bash
 set -e
 
-echo "🔧 LockPoint Alpha — Starting up..."
+echo "🔧 LockPoint v0.4.0 — Starting up..."
 
-# סנכרון בסיס הנתונים - SQLite
-npx prisma db push --skip-generate || echo "⚠️ Prisma push skipped or failed."
+# Apply database migrations (PostgreSQL)
+npx prisma migrate deploy || echo "⚠️ Prisma migrate deploy skipped or failed."
 
 echo "🔍 Checking database status..."
 
-# בדיקה חסינה למספר המשתמשים
+# Check user count (PostgreSQL compatible)
 USER_COUNT=$(npx prisma db execute --stdin <<EOF 2>/dev/null | grep -o '[0-9]*' | head -1
-SELECT COUNT(*) FROM User;
+SELECT COUNT(*) FROM "User";
 EOF
 )
 
-# הגדרת ברירת מחדל אם המשתנה ריק
+# Default to 0 if empty
 USER_COUNT=${USER_COUNT:-0}
 
 if [ "$USER_COUNT" = "0" ]; then
@@ -26,5 +26,5 @@ else
 fi
 
 echo "🚀 Starting LockPoint server on port $PORT..."
-# הרצת השרת
+# Start the server
 exec node server.js

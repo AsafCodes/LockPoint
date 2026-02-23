@@ -12,6 +12,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
+import { NotificationBell } from './NotificationBell';
 const packageInfo = require('../../../package.json');
 
 interface AppShellProps {
@@ -106,6 +107,7 @@ export function AppShell({ children }: AppShellProps) {
                     </div>
 
                     <div className="me-auto flex items-center gap-3">
+                        <NotificationBell />
                         <span className="data-mono text-xs text-text-muted hidden sm:block">
                             {user.rank.code} {user.lastName}
                         </span>

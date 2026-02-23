@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-23 (v0.3.0)
+> Updated: 2026-02-23 (v0.4.0)
 
 ---
 
@@ -50,7 +50,24 @@
 | **Commander Map Integration** | ✅ Done | `src/features/dashboard/components/CommanderDashboard.tsx` |
 | **Geofence Mgmt Map** | ✅ Done | `src/features/dashboard/components/GlobalOverview.tsx` |
 | **Commander API — zones** | ✅ Done | `src/app/api/dashboard/commander/route.ts` |
-| **Version Bump to v0.3.0** | ✅ Done | `package.json` |
+| **Version Bump to v0.3.x** | ✅ Done | `package.json` |
+
+---
+
+## v0.4.0-Alpha — PostgreSQL, Smart Notifications & BI Data Layer ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **PostgreSQL Migration** | ✅ Done | `prisma/schema.prisma`, `.env`, `.env.example` |
+| **Docker Entrypoint (migrate deploy)** | ✅ Done | `docker-entrypoint.sh` |
+| **Notification Model** | ✅ Done | `prisma/schema.prisma` |
+| **Notifications API (GET/PATCH)** | ✅ Done | `src/app/api/notifications/route.ts` |
+| **Cron Alert Checker (Rules B+C)** | ✅ Done | `src/app/api/cron/check-alerts/route.ts` |
+| **StatusSnapshot Model (BI)** | ✅ Done | `prisma/schema.prisma` |
+| **DailyUnitSummary Model (BI)** | ✅ Done | `prisma/schema.prisma` |
+| **NotificationBell UI** | ✅ Done | `src/shared/components/NotificationBell.tsx` |
+| **Alert Thresholds Config** | ✅ Done | `src/lib/constants.ts` |
+| **Version Bump to v0.4.0** | ✅ Done | `package.json` |
 
 ---
 
@@ -58,8 +75,7 @@
 
 | Feature | Priority | Version |
 |---------|----------|---------|
-| Push Notifications (exit alerts) | 🔴 High | v0.4.0 |
-| PostgreSQL Migration | 🟡 Medium | v0.4.0 |
+| Daily Summary Cron (nightly aggregation) | 🟡 Medium | v0.4.1 |
 | Password Reset / First Login | 🟢 Low | v0.5.0 |
 | Export PDF/Excel Reports | 🟢 Low | v0.5.0 |
 | Admin Panel (user management) | 🟢 Low | v0.5.0 |

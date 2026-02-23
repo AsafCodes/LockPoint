@@ -52,3 +52,15 @@ export const STATUS_COLORS = {
         dot: 'bg-slate-500',
     },
 } as const;
+
+/** Smart Notification Thresholds */
+export const NOTIFICATIONS = {
+    /** Minutes after EXIT event before alerting commander (if no report submitted) */
+    EXIT_NO_REPORT_MINUTES: 10,
+    /** Minutes of 'unknown' status before first commander alert */
+    UNKNOWN_STATUS_FIRST_ALERT_MINUTES: 15,
+    /** Minutes between repeated 'unknown' status alerts to commander */
+    UNKNOWN_STATUS_REPEAT_MINUTES: 30,
+    /** Cron polling interval (minutes) — how often the server checks for alerts */
+    CRON_INTERVAL_MINUTES: 5,
+} as const;

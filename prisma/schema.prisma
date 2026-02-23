@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -54,10 +54,12 @@ model User {
   lastLocationUpdate  DateTime?
 
   // Relations
-  geofenceEvents GeofenceEvent[]
-  exitReports    ExitReport[]
-  auditLogs      AuditLog[]
-  refreshTokens  RefreshToken[]
+  geofenceEvents  GeofenceEvent[]
+  exitReports     ExitReport[]
+  auditLogs       AuditLog[]
+  refreshTokens   RefreshToken[]
+  notifications   Notification[]
+  statusSnapshots StatusSnapshot[] @relation("StatusSnapshots")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,4 +136,62 @@ model AuditLog {
   ipAddress String?
   userAgent String?
   timestamp DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────
+// v0.4.0 — Smart Notifications
+// ─────────────────────────────────────────────────────────────
+
+/// In-app notification for commanders and soldiers
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // EXIT_NO_REPORT | UNKNOWN_STATUS | REPORT_REMINDER
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  relatedId String?  // soldierId or eventId for context
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// v0.4.0 — BI / AI Data Layer
+// ─────────────────────────────────────────────────────────────
+
+/// Periodic snapshot of soldier status — captured by cron job
+model StatusSnapshot {
+  id         String   @id @default(cuid())
+  soldierId  String
+  soldier    User     @relation("StatusSnapshots", fields: [soldierId], references: [id])
+  unitId     String
+  status     String   // in_base | out_of_base | unknown
+  lat        Float?
+  lng        Float?
+  accuracy   Float?
+  capturedAt DateTime @default(now())
+
+  @@index([soldierId, capturedAt])
+  @@index([unitId, capturedAt])
+}
+
+/// Daily unit-level summary — aggregated nightly
+model DailyUnitSummary {
+  id               String   @id @default(cuid())
+  unitId           String
+  date             DateTime @db.Date
+  totalPersonnel   Int
+  avgInBase        Float
+  avgOutOfBase     Float
+  avgUnknown       Float
+  totalExitEvents  Int
+  totalEnterEvents Int
+  unreportedExits  Int
+  capturedAt       DateTime @default(now())
+
+  @@unique([unitId, date])
+  @@index([unitId, date])
 }
