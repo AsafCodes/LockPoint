@@ -153,6 +153,12 @@ export function AppShell({ children }: AppShellProps) {
                                 );
                             })}
                         </div>
+                        {/* Version Display (Mobile) */}
+                        <div className="absolute -top-5 left-1/2 -translate-x-1/2">
+                            <span className="bg-onyx/80 backdrop-blur-md text-[9px] text-text-muted px-2 py-0.5 rounded-full border border-border-subtle data-mono">
+                                v{packageInfo.version}
+                            </span>
+                        </div>
                     </nav>
                 )}
             </div>
