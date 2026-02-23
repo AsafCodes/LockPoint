@@ -4,13 +4,14 @@
 // LockPoint — Soldier Home View (Hebrew, Mobile-First)
 // ─────────────────────────────────────────────────────────────
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TacticalCard } from '@/shared/components';
 import { StatusBadge } from '@/features/attendance/components/StatusBadge';
 import { GeofenceOverlay } from '@/features/geofence/components/GeofenceOverlay';
 import { useAuth } from '@/providers/AuthProvider';
 import { formatTacticalTime, formatCoordinates } from '@/shared/utils/formatters';
 import { useAuthMe, useRecordEvent, useSubmitReport } from '@/lib/api/hooks';
+import { apiClient } from '@/lib/api/client';
 import { t } from '@/lib/i18n';
 
 export function SoldierHome() {
@@ -21,6 +22,16 @@ export function SoldierHome() {
 
     const [showOverlay, setShowOverlay] = useState(false);
     const [pendingExitEventId, setPendingExitEventId] = useState<string | null>(null);
+    const [defaultZoneId, setDefaultZoneId] = useState<string | null>(null);
+
+    // Fetch the first available zone ID on mount
+    useEffect(() => {
+        apiClient.get<any[]>('/zones').then((zones) => {
+            if (zones && zones.length > 0) {
+                setDefaultZoneId(zones[0].id);
+            }
+        }).catch(() => { /* zones not loaded yet — will retry on button press */ });
+    }, []);
 
     // Use refreshed data from API if available, else fall back to auth context
     const user = me || authUser;
@@ -29,21 +40,22 @@ export function SoldierHome() {
 
     const currentStatus = user.currentStatus || 'unknown';
     const lastUpdate = user.lastLocationUpdate || new Date().toISOString();
-    // Use real coords if available, else fallback slightly (since simulator needs somewhere to start)
     const lat = user.lastKnownLat || 32.0853;
     const lng = user.lastKnownLng || 34.7818;
 
     const handleSimulateExit = async () => {
-        // 1. Record the EXIT event
+        if (!defaultZoneId) {
+            console.warn('No zones available');
+            return;
+        }
         recordEvent.mutate({
-            zoneId: 'z1', // placeholder
+            zoneId: defaultZoneId,
             transition: 'EXIT',
             lat: lat + 0.005,
             lng: lng + 0.005,
             accuracy: 15,
         }, {
             onSuccess: (res) => {
-                // 2. Show the exit report overlay, passing the new event ID
                 setPendingExitEventId(res.id);
                 setShowOverlay(true);
             }
@@ -51,8 +63,9 @@ export function SoldierHome() {
     };
 
     const handleSimulateEnter = () => {
+        if (!defaultZoneId) return;
         recordEvent.mutate({
-            zoneId: 'z1', // placeholder
+            zoneId: defaultZoneId,
             transition: 'ENTER',
             lat: 32.0853,
             lng: 34.7818,

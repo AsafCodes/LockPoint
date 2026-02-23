@@ -7,6 +7,7 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { User, UserRole } from '@/features/hierarchy';
 import type { LoginCredentials } from '@/lib/api/types';
+import { apiClient } from '@/lib/api/client';
 
 interface AuthState {
     user: User | null;
@@ -134,8 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const getAccessToken = useCallback(() => accessTokenRef.current, []);
 
-    // Cleanup on unmount
+    // Connect API client to our token store
     useEffect(() => {
+        apiClient.setTokenGetter(() => accessTokenRef.current);
         return () => {
             if (refreshTimerRef.current) {
                 clearTimeout(refreshTimerRef.current);

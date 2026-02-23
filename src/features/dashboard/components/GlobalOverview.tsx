@@ -143,12 +143,12 @@ function GeofenceManagementView() {
 export function GlobalOverview() {
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab');
+    // Hooks MUST be called before any conditional returns (React rules of hooks)
+    const { data, isLoading } = useSeniorDashboard();
 
     if (activeTab === 'geofence') {
         return <GeofenceManagementView />;
     }
-
-    const { data, isLoading } = useSeniorDashboard();
 
     if (isLoading || !data) {
         return <div className="animate-pulse flex space-x-4"><div className="flex-1 space-y-4 py-1"><div className="h-4 bg-slate-dark rounded w-3/4"></div><div className="space-y-2"><div className="h-4 bg-slate-dark rounded"></div><div className="h-4 bg-slate-dark rounded w-5/6"></div></div></div></div>;

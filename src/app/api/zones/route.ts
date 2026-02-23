@@ -7,13 +7,13 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { withRole, successResponse } from '@/lib/auth/middleware';
+import { withAuth, withRole, successResponse } from '@/lib/auth/middleware';
 import { logAudit, getClientInfo } from '@/lib/auth/audit';
 import type { TokenPayload } from '@/lib/auth/jwt';
 
-// ── GET: List zones ──────────────────────────────────────────
+// ── GET: List zones (all authenticated users can read) ───────
 
-export const GET = withRole(['commander', 'senior_commander'], async (_req: NextRequest, _user: TokenPayload) => {
+export const GET = withAuth(async (_req: NextRequest, _user: TokenPayload) => {
     const zones = await prisma.geofenceZone.findMany({
         include: { unit: { select: { name: true } } },
         orderBy: { createdAt: 'desc' },
