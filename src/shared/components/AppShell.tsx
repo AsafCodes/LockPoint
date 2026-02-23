@@ -12,7 +12,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
-const packageInfo = require('../../../../package.json');
+const packageInfo = require('../../../package.json');
 
 interface AppShellProps {
     children: ReactNode;
