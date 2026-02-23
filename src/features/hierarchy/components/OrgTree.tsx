@@ -42,7 +42,7 @@ function OrgTreeNode({
     selectedId?: string;
 }) {
     const [expanded, setExpanded] = useState(depth < 2);
-    const hasChildren = node.children.length > 0;
+    const hasChildren = (node.children || []).length > 0;
     const isSelected = node.id === selectedId;
 
     const stats = node.stats;
@@ -107,7 +107,7 @@ function OrgTreeNode({
             {/* Children */}
             {expanded && hasChildren && (
                 <div>
-                    {node.children.map((child) => (
+                    {(node.children || []).map((child) => (
                         <OrgTreeNode
                             key={child.id}
                             node={child}

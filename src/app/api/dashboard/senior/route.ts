@@ -79,7 +79,7 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
 
     return successResponse({
         globalStats: { total, inBase, outOfBase, unknown },
-        units: unitStats,
+        units: unitStats.map((u: any) => ({ ...u, children: [] })),
         events: events.map((e: any) => ({
             id: e.id,
             soldierId: e.soldierId,
