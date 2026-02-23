@@ -194,6 +194,9 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
 
             {/* Override Leaflet default styles */}
             <style jsx global>{`
+                .leaflet-container {
+                    z-index: 10 !important;
+                }
                 .tactical-marker {
                     background: none !important;
                     border: none !important;

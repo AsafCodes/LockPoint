@@ -38,7 +38,10 @@ function GeofenceManagementView() {
                     <h2 className="text-xl font-bold text-text-primary">{t.geofenceMgmt.title}</h2>
                     <p className="text-sm text-text-muted mt-1">{t.geofenceMgmt.subtitle}</p>
                 </div>
-                <button className="px-4 py-2.5 rounded-lg bg-signal-green text-midnight font-bold text-sm transition-all hover:bg-signal-green/90 active:scale-[0.98] touch-target">
+                <button
+                    onClick={() => alert(t.app.comingSoon)}
+                    className="px-4 py-2.5 rounded-lg bg-signal-green text-midnight font-bold text-sm transition-all hover:bg-signal-green/90 active:scale-[0.98] touch-target"
+                >
                     {t.geofenceMgmt.createZone}
                 </button>
             </div>
@@ -76,10 +79,10 @@ function GeofenceManagementView() {
                                 <span>{t.soldier.radius}: <span className="data-mono text-text-secondary">{zone.radiusMeters}m</span></span>
                             </div>
                             <div className="flex gap-2 pt-1">
-                                <button className="text-xs px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary touch-target">
+                                <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary touch-target">
                                     {t.geofenceMgmt.edit}
                                 </button>
-                                <button className="text-xs px-3 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 touch-target">
+                                <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-3 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 touch-target">
                                     {t.geofenceMgmt.delete}
                                 </button>
                             </div>
@@ -124,10 +127,10 @@ function GeofenceManagementView() {
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <button className="text-xs px-2.5 py-1.5 rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-dark hover:text-text-primary transition-all">
+                                            <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-2.5 py-1.5 rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-dark hover:text-text-primary transition-all">
                                                 {t.geofenceMgmt.edit}
                                             </button>
-                                            <button className="text-xs px-2.5 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 hover:bg-danger-red/10 hover:text-danger-red transition-all">
+                                            <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-2.5 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 hover:bg-danger-red/10 hover:text-danger-red transition-all">
                                                 {t.geofenceMgmt.delete}
                                             </button>
                                         </div>

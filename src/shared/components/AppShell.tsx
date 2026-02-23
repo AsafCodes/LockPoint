@@ -12,6 +12,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
+const packageInfo = require('../../../../package.json');
 
 interface AppShellProps {
     children: ReactNode;
@@ -63,6 +64,12 @@ export function AppShell({ children }: AppShellProps) {
             {/* Desktop sidebar — hidden on mobile */}
             <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-30 lg:start-0">
                 <Sidebar onClose={() => setSidebarOpen(false)} />
+                {/* Version Display */}
+                <div className="p-4 border-t border-border-subtle/50">
+                    <p className="text-[10px] text-text-muted data-mono opacity-50 text-center">
+                        v{packageInfo.version}
+                    </p>
+                </div>
             </aside>
 
             {/* Mobile sidebar overlay */}

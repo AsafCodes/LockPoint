@@ -26,9 +26,30 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
         orderBy: { type: 'asc' },
     });
 
-    // Aggregate per unit
+    // Build children map for fast topological traversal
+    const childrenMap = new Map<string, string[]>();
+    for (const u of units) {
+        if (u.parentId) {
+            if (!childrenMap.has(u.parentId)) childrenMap.set(u.parentId, []);
+            childrenMap.get(u.parentId)!.push(u.id);
+        }
+    }
+
+    // Recursively get all descendant unit IDs
+    function getDescendants(id: string): string[] {
+        const children = childrenMap.get(id) || [];
+        let desc = [...children];
+        for (const childId of children) {
+            desc.push(...getDescendants(childId));
+        }
+        return desc;
+    }
+
+    // Aggregate per unit (including all descendants)
     const unitStats = units.map((unit: any) => {
-        const unitSoldiers = soldiers.filter((s: any) => s.unitId === unit.id);
+        const allIds = new Set([unit.id, ...getDescendants(unit.id)]);
+        const unitSoldiers = soldiers.filter((s: any) => allIds.has(s.unitId));
+
         return {
             ...unit,
             stats: {
@@ -39,20 +60,6 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
             },
         };
     });
-
-    // Roll up stats to parent units
-    const statsMap = new Map<string, { totalPersonnel: number, inBase: number, outOfBase: number, unknown: number }>(
-        unitStats.map((u: any) => [u.id, u.stats])
-    );
-    for (const unit of unitStats) {
-        if (unit.parentId && statsMap.has(unit.parentId)) {
-            const parent = statsMap.get(unit.parentId)!;
-            parent.totalPersonnel += unit.stats.totalPersonnel;
-            parent.inBase += unit.stats.inBase;
-            parent.outOfBase += unit.stats.outOfBase;
-            parent.unknown += unit.stats.unknown;
-        }
-    }
 
     // Global totals
     const total = soldiers.length;
