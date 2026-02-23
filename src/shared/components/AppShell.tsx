@@ -4,11 +4,11 @@
 // LockPoint — App Shell (Mobile-First + RTL)
 // ─────────────────────────────────────────────────────────────
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { cn } from '@/shared/utils/cn';
 import { useAuth } from '@/providers/AuthProvider';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
@@ -34,10 +34,27 @@ const BOTTOM_TABS = {
 
 export function AppShell({ children }: AppShellProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
 
-    if (!user) return <>{children}</>;
+    // Redirect to login if not authenticated (e.g. after page refresh)
+    useEffect(() => {
+        if (!isAuthenticated && pathname !== '/') {
+            router.replace('/');
+        }
+    }, [isAuthenticated, pathname, router]);
+
+    if (!user) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-midnight">
+                <div className="text-center space-y-3">
+                    <div className="w-8 h-8 border-2 border-signal-green/30 border-t-signal-green rounded-full animate-spin mx-auto" />
+                    <p className="text-xs text-text-muted">מפנה לדף ההתחברות...</p>
+                </div>
+            </div>
+        );
+    }
 
     const tabs = BOTTOM_TABS[user.role] || [];
 
