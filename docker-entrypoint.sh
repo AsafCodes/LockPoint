@@ -11,15 +11,17 @@ echo "🔍 Checking database status..."
 # To safely check if users exist, we use a simple Node script
 # This is much more reliable across different Docker environments
 # than parsing stdout from `prisma db execute` which may include warnings/logs.
+# 1. יצירת קובץ הבדיקה (check-db.js)
 cat << 'EOF' > check-db.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function main() {
   try {
     const count = await prisma.user.count();
-    console.log(`USER_COUNT=${count}`);
+    // מדפיסים רק את המספר כדי שה-Bash יוכל לקרוא אותו בקלות
+    process.stdout.write(count.toString());
   } catch (e) {
-    console.log('USER_COUNT=0');
+    process.stdout.write('0');
   } finally {
     await prisma.$disconnect();
   }
@@ -27,12 +29,9 @@ async function main() {
 main();
 EOF
 
-# Run the script and capture the line containing USER_COUNT
-USER_COUNT_OUTPUT=$(node check-db.js | grep 'USER_COUNT')
-USER_COUNT=$(echo "$USER_COUNT_OUTPUT" | cut -d'=' -f2)
-
-# Default to 0 if empty
-USER_COUNT=${USER_COUNT:-0}
+# 2. הרצת הקובץ בעזרת Node ושמירת התוצאה למשתנה
+# זה פותר את בעיית ה-Permission Denied כי אנחנו מפעילים את Node ישירות
+USER_COUNT=$(node check-db.js 2>/dev/null || echo "0")
 
 rm check-db.js
 
