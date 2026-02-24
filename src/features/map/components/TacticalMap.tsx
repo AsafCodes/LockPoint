@@ -8,8 +8,8 @@
 // Must be imported with next/dynamic({ ssr: false }).
 // ─────────────────────────────────────────────────────────────
 
-import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon as LeafletPolygon, useMap } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon as LeafletPolygon, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -86,6 +86,70 @@ function FitBounds({ points }: { points: [number, number][] }) {
     return null;
 }
 
+// ── Zoom-adaptive dot markers for zones ─────────────────────
+
+function ZoomDotMarkers({ zones }: { zones: MapZone[] }) {
+    const [zoom, setZoom] = useState(14);
+    useMapEvents({
+        zoomend: (e) => setZoom(e.target.getZoom()),
+    });
+
+    // Only show dots when zoomed out (< 13)
+    if (zoom >= 13) return null;
+
+    return (
+        <>
+            {zones.filter(z => z.isActive).map(zone => {
+                // Compute centroid
+                let lat: number | null = null;
+                let lng: number | null = null;
+                let vertexCount = 0;
+
+                if (zone.vertices) {
+                    try {
+                        const verts = typeof zone.vertices === 'string' ? JSON.parse(zone.vertices) : zone.vertices;
+                        if (Array.isArray(verts) && verts.length >= 3) {
+                            lat = verts.reduce((s: number, v: any) => s + v.lat, 0) / verts.length;
+                            lng = verts.reduce((s: number, v: any) => s + v.lng, 0) / verts.length;
+                            vertexCount = verts.length;
+                        }
+                    } catch { /* skip */ }
+                }
+
+                if (!lat && !lng && zone.centerLat && zone.centerLng) {
+                    lat = zone.centerLat;
+                    lng = zone.centerLng;
+                }
+
+                if (lat === null || lng === null) return null;
+
+                // Dot radius: bigger zones → bigger dots (6-14px range)
+                const dotRadius = Math.min(14, Math.max(6, 4 + vertexCount));
+
+                return (
+                    <CircleMarker
+                        key={`dot-${zone.id}`}
+                        center={[lat, lng]}
+                        radius={dotRadius}
+                        pathOptions={{
+                            color: '#22c55e',
+                            fillColor: '#22c55e',
+                            fillOpacity: 0.7,
+                            weight: 2,
+                        }}
+                    >
+                        <Popup>
+                            <div style={{ fontFamily: 'system-ui', direction: 'rtl', color: '#0a0f1a', minWidth: '80px' }}>
+                                <strong>{zone.name}</strong>
+                            </div>
+                        </Popup>
+                    </CircleMarker>
+                );
+            })}
+        </>
+    );
+}
+
 // ── Main Component ──────────────────────────────────────────
 
 export function TacticalMap({ soldiers, zones, height = '320px', interactive = true }: TacticalMapProps) {
@@ -141,6 +205,9 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
 
                 {/* Auto-fit bounds to all data points */}
                 <FitBounds points={allPoints} />
+
+                {/* Zoom-adaptive dot markers when zoomed out */}
+                <ZoomDotMarkers zones={zones} />
 
                 {/* Geofence zone overlays — polygons + circles */}
                 {zones.filter((z) => z.isActive).map((zone) => {

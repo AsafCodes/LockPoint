@@ -290,7 +290,7 @@ export function GlobalOverview() {
     }
 
     const totals = data.globalStats;
-    const readiness = Math.round((totals.inBase / totals.total) * 100);
+    const readiness = totals.total > 0 ? Math.round((totals.inBase / totals.total) * 100) : 0;
 
     return (
         <div className="space-y-4 md:space-y-6">
@@ -361,7 +361,7 @@ export function GlobalOverview() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {data.units.filter(u => u.type === 'brigade' || u.type === 'battalion').map((unit: any) => {
+                                    {data.units.filter((u: any) => (u.stats?.totalPersonnel || 0) > 0).map((unit: any) => {
                                         const total = unit.stats?.totalPersonnel || 0;
                                         const ready = Math.round(((unit.stats?.inBase || 0) / (total || 1)) * 100);
                                         return (

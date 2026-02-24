@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-24 (v0.4.1)
+> Updated: 2026-02-24 (v0.4.2)
 
 ---
 
@@ -85,11 +85,25 @@
 | **Zones API — vertices in PUT** | ✅ Done | `src/app/api/zones/[id]/route.ts` |
 | **Version Bump to v0.4.1** | ✅ Done | `package.json` |
 
+---
+
+## v0.4.2-Alpha — Bug Fix & Map Refinements ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **🐛 Fix כשירות יחידה (Unit Readiness)** | ✅ Fixed | `GlobalOverview.tsx` — show all units with soldiers, NaN guard |
+| **Zoom-Adaptive Zone Dot Markers** | ✅ Done | `TacticalMap.tsx` — CircleMarker dots at low zoom |
+| **Brighter Tiles in ZoneDrawer** | ✅ Done | `ZoneDrawer.tsx` — CartoDB Voyager (light) tiles |
+| **Delete Polygon Button** | ✅ Done | `ZoneDrawer.tsx` — 🗑️ clear button + leaflet-draw trash |
+| **GPS Auto-Center (Create Mode)** | ✅ Done | `ZoneDrawer.tsx` — navigator.geolocation fly-to |
+| **Coordinate Search** | ✅ Done | `ZoneDrawer.tsx` — detect `lat, lng` in search bar |
+| **Live Map Center Coordinates** | ✅ Done | `ZoneDrawer.tsx` — bottom bar shows current center |
+| **Version Bump to v0.4.2** | ✅ Done | `package.json` |
+
 **Impact on existing features:**
-- v0.3.0 **TacticalMap** — now renders both polygons and legacy circles
-- v0.3.0 **Geofence Mgmt** in GlobalOverview — form modal replaced with map drawer
-- v0.1.0 **Zones CRUD API** — PUT now accepts `vertices` + `shapeType`
-- v0.2.0 **Auto ENTER/EXIT Detection** — ⚠️ Future: needs point-in-polygon check for polygon zones
+- v0.1.0 **Senior Dashboard** — unit readiness table now shows all units with soldiers
+- v0.3.0 **TacticalMap** — zones visible as dots when zoomed out
+- v0.4.1 **ZoneDrawer** — major UX improvements across 5 areas
 
 ---
 
