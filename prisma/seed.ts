@@ -12,6 +12,18 @@ const SALT_ROUNDS = 12;
 async function main() {
     console.log('🌱 Seeding LockPoint database...');
 
+    // ── Clean slate: delete old data in FK-safe order ─────────
+    // This prevents duplicate trees when re-seeding a DB that
+    // already contains auto-generated CUID-based units.
+    console.log('  🧹 Cleaning old data...');
+    await prisma.notification.deleteMany();
+    await prisma.geofenceEvent.deleteMany();
+    await prisma.geofenceZone.deleteMany();
+    await prisma.auditLog.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.unit.deleteMany();
+    console.log('  ✅ Old data cleared');
+
     // Hash the default password for all demo users
     const commonPasswordHash = await bcrypt.hash('Lockpoint2026!', SALT_ROUNDS);
 

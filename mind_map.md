@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-24 (v0.4.2)
+> Updated: 2026-02-24 (v0.4.3)
 
 ---
 
@@ -104,6 +104,25 @@
 - v0.1.0 **Senior Dashboard** — unit readiness table now shows all units with soldiers
 - v0.3.0 **TacticalMap** — zones visible as dots when zoomed out
 - v0.4.1 **ZoneDrawer** — major UX improvements across 5 areas
+
+---
+
+## v0.4.3-Alpha — SC-001 Dashboard Bug Fixes ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **🐛 Fix OrgTree Infinite Duplication** | ✅ Fixed | `senior/route.ts`, `commander/route.ts` — `buildUnitTree` + `flatUnits` |
+| **🐛 Fix Tab Highlighting** | ✅ Fixed | `Sidebar.tsx`, `AppShell.tsx` — `useSearchParams()` replaces `window.location.search` |
+| **🐛 Fix ZoneDrawer Not Closing** | ✅ Fixed | `GlobalOverview.tsx` — `setShowDrawer(false)` after save |
+| **Seed Script — Clean Slate** | ✅ Done | `prisma/seed.ts` — `deleteMany` in FK-safe order prevents duplicates |
+| **Suspense Wrappers (SSR)** | ✅ Done | `commander/page.tsx`, `senior/page.tsx`, `soldier/page.tsx` |
+| **TypeScript Interfaces** | ✅ Done | `hooks.ts` — added `flatUnits: OrgNode[]` to response types |
+
+**Impact on existing features:**
+- v0.1.0 **OrgTree** — shows clean nested hierarchy, no duplicates
+- v0.1.0 **Unit Readiness Table** — uses flat list, unaffected by tree nesting
+- v0.4.0 **Seed Script** — now idempotent via clean-slate delete + upsert
+- v0.3.0 **Navigation** — tab highlighting works correctly on client-side navigation
 
 ---
 
