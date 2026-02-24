@@ -97,6 +97,7 @@ export const t = {
         title: 'ניהול גדרות גיאוגרפיות',
         subtitle: 'הגדרה וניטור אזורי גדר',
         createZone: '+ צור אזור',
+        editZone: 'עריכת אזור',
         configuredZones: 'אזורים מוגדרים',
         zoneName: 'שם אזור',
         type: 'סוג',
@@ -107,6 +108,20 @@ export const t = {
         delete: 'מחיקה',
         mapTitle: 'מפת גדרות אינטראקטיבית',
         mapSubtitle: 'מפת Leaflet עם שכבות אזורים ניתנות לעריכה',
+        // Form fields
+        name: 'שם',
+        description: 'תיאור (אופציונלי)',
+        centerLat: 'קו רוחב',
+        centerLng: 'קו אורך',
+        radius: 'רדיוס (מטרים)',
+        unit: 'יחידה',
+        active: 'פעיל',
+        save: 'שמור',
+        cancel: 'ביטול',
+        deleteConfirm: 'האם למחוק את האזור?',
+        deleteConfirmBody: 'פעולה זו לא ניתנת לביטול.',
+        saving: 'שומר...',
+        deleting: 'מוחק...',
     },
 
     // ── Geofence Overlay (Breach) ────────────────────────

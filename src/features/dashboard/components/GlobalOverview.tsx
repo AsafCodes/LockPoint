@@ -4,6 +4,7 @@
 // LockPoint — Senior Commander Global Overview (Hebrew, Mobile-First)
 // ─────────────────────────────────────────────────────────────
 
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TacticalCard } from '@/shared/components';
 import { OrgTree } from '@/features/hierarchy/components/OrgTree';
@@ -13,22 +14,268 @@ import type { OrgNode } from '@/features/hierarchy/types';
 import { useSeniorDashboard } from '@/lib/api/hooks';
 import { DynamicTacticalMap } from '@/features/map';
 import { apiClient } from '@/lib/api/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Demo data removed - using real API from /api/zones
 
 
+// ── Zone Form Modal ─────────────────────────────────────────
+
+interface ZoneFormData {
+    name: string;
+    description?: string;
+    shapeType: 'circle' | 'polygon';
+    centerLat: number;
+    centerLng: number;
+    radiusMeters: number;
+    isActive: boolean;
+    unitId: string;
+}
+
+interface ZoneModalProps {
+    zone?: any; // null for create, zone object for edit
+    onClose: () => void;
+    onSaved: () => void;
+}
+
+function ZoneFormModal({ zone, onClose, onSaved }: ZoneModalProps) {
+    const isEdit = !!zone;
+    const [form, setForm] = useState<ZoneFormData>({
+        name: zone?.name || '',
+        description: zone?.description || '',
+        shapeType: zone?.shapeType || 'circle',
+        centerLat: zone?.centerLat || 32.08,
+        centerLng: zone?.centerLng || 34.78,
+        radiusMeters: zone?.radiusMeters || 500,
+        isActive: zone?.isActive ?? true,
+        unitId: zone?.unitId || '',
+    });
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+        try {
+            if (isEdit) {
+                await apiClient.put(`/zones/${zone.id}`, {
+                    name: form.name,
+                    description: form.description,
+                    centerLat: form.centerLat,
+                    centerLng: form.centerLng,
+                    radiusMeters: form.radiusMeters,
+                    isActive: form.isActive,
+                });
+            } else {
+                await apiClient.post('/zones', form);
+            }
+            onSaved();
+            onClose();
+        } catch (err: any) {
+            setError(err?.message || 'שגיאה בשמירה');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+            <div
+                className="bg-onyx border border-border-subtle rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6 animate-slide-up"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <h3 className="text-lg font-bold text-text-primary mb-4">
+                    {isEdit ? t.geofenceMgmt.editZone : t.geofenceMgmt.createZone}
+                </h3>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Zone Name */}
+                    <div>
+                        <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.name}</label>
+                        <input
+                            type="text"
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            required
+                            className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
+                        />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.description}</label>
+                        <input
+                            type="text"
+                            value={form.description || ''}
+                            onChange={(e) => setForm({ ...form, description: e.target.value })}
+                            className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
+                        />
+                    </div>
+
+                    {/* Coordinates Row */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.centerLat}</label>
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={form.centerLat}
+                                onChange={(e) => setForm({ ...form, centerLat: parseFloat(e.target.value) || 0 })}
+                                required
+                                className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm data-mono focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.centerLng}</label>
+                            <input
+                                type="number"
+                                step="0.0001"
+                                value={form.centerLng}
+                                onChange={(e) => setForm({ ...form, centerLng: parseFloat(e.target.value) || 0 })}
+                                required
+                                className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm data-mono focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Radius */}
+                    <div>
+                        <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.radius}</label>
+                        <input
+                            type="number"
+                            min="10"
+                            max="50000"
+                            value={form.radiusMeters}
+                            onChange={(e) => setForm({ ...form, radiusMeters: parseInt(e.target.value) || 500 })}
+                            required
+                            className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm data-mono focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
+                        />
+                    </div>
+
+                    {/* Active Toggle */}
+                    <div className="flex items-center gap-3">
+                        <label className="text-xs font-medium text-text-muted">{t.geofenceMgmt.active}</label>
+                        <button
+                            type="button"
+                            onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                            className={cn(
+                                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                                form.isActive ? 'bg-signal-green' : 'bg-slate-dark border border-border-subtle'
+                            )}
+                        >
+                            <span className={cn(
+                                'inline-block h-4 w-4 rounded-full bg-white transition-transform',
+                                form.isActive ? 'translate-x-6' : 'translate-x-1'
+                            )} />
+                        </button>
+                    </div>
+
+                    {/* Error */}
+                    {error && (
+                        <div className="text-xs text-danger-red bg-danger-red/10 px-3 py-2 rounded-lg">{error}</div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            type="submit"
+                            disabled={saving || !form.name}
+                            className="flex-1 px-4 py-2.5 rounded-lg bg-signal-green text-midnight font-bold text-sm transition-all hover:bg-signal-green/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {saving ? t.geofenceMgmt.saving : t.geofenceMgmt.save}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2.5 rounded-lg border border-border-subtle text-text-secondary text-sm font-medium hover:bg-slate-dark transition-all"
+                        >
+                            {t.geofenceMgmt.cancel}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+// ── Delete Confirmation Dialog ──────────────────────────────
+
+function DeleteConfirmDialog({ zone, onClose, onDeleted }: { zone: any; onClose: () => void; onDeleted: () => void }) {
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            await apiClient.delete(`/zones/${zone.id}`);
+            onDeleted();
+            onClose();
+        } catch {
+            alert('שגיאה במחיקה');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-onyx border border-border-subtle rounded-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-bold text-text-primary mb-2">{t.geofenceMgmt.deleteConfirm}</h3>
+                <p className="text-sm text-text-muted mb-1">{zone.name}</p>
+                <p className="text-xs text-danger-red/70 mb-5">{t.geofenceMgmt.deleteConfirmBody}</p>
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="flex-1 px-4 py-2.5 rounded-lg bg-danger-red text-white font-bold text-sm transition-all hover:bg-danger-red/90 active:scale-[0.98] disabled:opacity-50"
+                    >
+                        {deleting ? t.geofenceMgmt.deleting : t.geofenceMgmt.delete}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2.5 rounded-lg border border-border-subtle text-text-secondary text-sm font-medium hover:bg-slate-dark transition-all"
+                    >
+                        {t.geofenceMgmt.cancel}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ── Geofence Management View ────────────────────────────────
 
 function GeofenceManagementView() {
+    const queryClient = useQueryClient();
+    const [formZone, setFormZone] = useState<any | null>(null); // null = closed, {} = create, zone = edit
+    const [showForm, setShowForm] = useState(false);
+    const [deleteZone, setDeleteZone] = useState<any | null>(null);
+
     // Fetch real zones from API
     const { data: zones, isLoading } = useQuery({
         queryKey: ['zones'],
         queryFn: () => apiClient.get<any[]>('/zones'),
     });
 
-    const activeZones = (zones || []).filter((z: any) => z.isActive);
     const allZones = zones || [];
+
+    const handleSaved = () => {
+        queryClient.invalidateQueries({ queryKey: ['zones'] });
+    };
+
+    const handleDeleted = () => {
+        queryClient.invalidateQueries({ queryKey: ['zones'] });
+    };
+
+    const openCreate = () => {
+        setFormZone(null);
+        setShowForm(true);
+    };
+
+    const openEdit = (zone: any) => {
+        setFormZone(zone);
+        setShowForm(true);
+    };
 
     return (
         <div className="space-y-4 md:space-y-6">
@@ -39,7 +286,7 @@ function GeofenceManagementView() {
                     <p className="text-sm text-text-muted mt-1">{t.geofenceMgmt.subtitle}</p>
                 </div>
                 <button
-                    onClick={() => alert(t.app.comingSoon)}
+                    onClick={openCreate}
                     className="px-4 py-2.5 rounded-lg bg-signal-green text-midnight font-bold text-sm transition-all hover:bg-signal-green/90 active:scale-[0.98] touch-target"
                 >
                     {t.geofenceMgmt.createZone}
@@ -79,10 +326,10 @@ function GeofenceManagementView() {
                                 <span>{t.soldier.radius}: <span className="data-mono text-text-secondary">{zone.radiusMeters}m</span></span>
                             </div>
                             <div className="flex gap-2 pt-1">
-                                <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary touch-target">
+                                <button onClick={() => openEdit(zone)} className="text-xs px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary touch-target hover:bg-slate-dark transition-all">
                                     {t.geofenceMgmt.edit}
                                 </button>
-                                <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-3 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 touch-target">
+                                <button onClick={() => setDeleteZone(zone)} className="text-xs px-3 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 touch-target hover:bg-danger-red/10 transition-all">
                                     {t.geofenceMgmt.delete}
                                 </button>
                             </div>
@@ -127,10 +374,10 @@ function GeofenceManagementView() {
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-2.5 py-1.5 rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-dark hover:text-text-primary transition-all">
+                                            <button onClick={() => openEdit(zone)} className="text-xs px-2.5 py-1.5 rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-dark hover:text-text-primary transition-all">
                                                 {t.geofenceMgmt.edit}
                                             </button>
-                                            <button onClick={() => alert(t.app.comingSoon)} className="text-xs px-2.5 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 hover:bg-danger-red/10 hover:text-danger-red transition-all">
+                                            <button onClick={() => setDeleteZone(zone)} className="text-xs px-2.5 py-1.5 rounded-lg border border-danger-red/30 text-danger-red/70 hover:bg-danger-red/10 hover:text-danger-red transition-all">
                                                 {t.geofenceMgmt.delete}
                                             </button>
                                         </div>
@@ -141,6 +388,24 @@ function GeofenceManagementView() {
                     </table>
                 </div>
             </TacticalCard>
+
+            {/* Zone Form Modal */}
+            {showForm && (
+                <ZoneFormModal
+                    zone={formZone}
+                    onClose={() => setShowForm(false)}
+                    onSaved={handleSaved}
+                />
+            )}
+
+            {/* Delete Confirmation */}
+            {deleteZone && (
+                <DeleteConfirmDialog
+                    zone={deleteZone}
+                    onClose={() => setDeleteZone(null)}
+                    onDeleted={handleDeleted}
+                />
+            )}
         </div>
     );
 }
