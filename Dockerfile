@@ -49,12 +49,17 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 # ----------------------------
 
+# 4. הגדרת תיקיות ובעלות
 RUN mkdir -p /app/prisma && chown -R nextjs:nodejs /app/prisma
 
+# העתקת ה-entrypoint והסקריפט
+COPY check-db.js /usr/local/bin/check-db.js
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+# 2. מתן הרשאות הרצה (כמשתמש root)
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
-    chmod +x /usr/local/bin/docker-entrypoint.sh && \
-    chown nextjs:nodejs /usr/local/bin/docker-entrypoint.sh
+    chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/check-db.js && \
+    chown nextjs:nodejs /usr/local/bin/docker-entrypoint.sh /usr/local/bin/check-db.js
 
 RUN npm install -g tsx
 
