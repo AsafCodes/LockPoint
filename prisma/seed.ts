@@ -17,36 +17,52 @@ async function main() {
 
     // ── Units (Hierarchy) ────────────────────────────────────
 
-    const cmdNorth = await prisma.unit.create({
-        data: { name: 'פיקוד צפון', type: 'command' },
+    const cmdNorth = await prisma.unit.upsert({
+        where: { id: 'cmd-north' },
+        update: {},
+        create: { id: 'cmd-north', name: 'פיקוד צפון', type: 'command' },
     });
 
-    const bde7 = await prisma.unit.create({
-        data: { name: 'חטיבה 7', type: 'brigade', parentId: cmdNorth.id },
+    const bde7 = await prisma.unit.upsert({
+        where: { id: 'bde-7' },
+        update: {},
+        create: { id: 'bde-7', name: 'חטיבה 7', type: 'brigade', parentId: cmdNorth.id },
     });
 
-    const bde35 = await prisma.unit.create({
-        data: { name: 'חטיבה 35', type: 'brigade', parentId: cmdNorth.id },
+    const bde35 = await prisma.unit.upsert({
+        where: { id: 'bde-35' },
+        update: {},
+        create: { id: 'bde-35', name: 'חטיבה 35', type: 'brigade', parentId: cmdNorth.id },
     });
 
-    const bn71 = await prisma.unit.create({
-        data: { name: 'גדוד 71', type: 'battalion', parentId: bde7.id },
+    const bn71 = await prisma.unit.upsert({
+        where: { id: 'bn-71' },
+        update: {},
+        create: { id: 'bn-71', name: 'גדוד 71', type: 'battalion', parentId: bde7.id },
     });
 
-    const bn72 = await prisma.unit.create({
-        data: { name: 'גדוד 72', type: 'battalion', parentId: bde7.id },
+    const bn72 = await prisma.unit.upsert({
+        where: { id: 'bn-72' },
+        update: {},
+        create: { id: 'bn-72', name: 'גדוד 72', type: 'battalion', parentId: bde7.id },
     });
 
-    const coyAlpha = await prisma.unit.create({
-        data: { name: 'פלוגה א\'', type: 'company', parentId: bn71.id },
+    const coyAlpha = await prisma.unit.upsert({
+        where: { id: 'coy-alpha' },
+        update: {},
+        create: { id: 'coy-alpha', name: 'פלוגה א\'', type: 'company', parentId: bn71.id },
     });
 
-    const plt1 = await prisma.unit.create({
-        data: { name: 'מחלקה 1', type: 'platoon', parentId: coyAlpha.id },
+    const plt1 = await prisma.unit.upsert({
+        where: { id: 'plt-1' },
+        update: {},
+        create: { id: 'plt-1', name: 'מחלקה 1', type: 'platoon', parentId: coyAlpha.id },
     });
 
-    const plt2 = await prisma.unit.create({
-        data: { name: 'מחלקה 2', type: 'platoon', parentId: coyAlpha.id },
+    const plt2 = await prisma.unit.upsert({
+        where: { id: 'plt-2' },
+        update: {},
+        create: { id: 'plt-2', name: 'מחלקה 2', type: 'platoon', parentId: coyAlpha.id },
     });
 
     console.log('  ✅ Units created');
@@ -54,8 +70,10 @@ async function main() {
     // ── Users ────────────────────────────────────────────────
 
     // Senior Commander
-    const sc001 = await prisma.user.create({
-        data: {
+    const sc001 = await prisma.user.upsert({
+        where: { serviceNumber: 'SC-001' },
+        update: {},
+        create: {
             serviceNumber: 'SC-001',
             passwordHash: commonPasswordHash,
             firstName: 'ארי',
@@ -70,8 +88,10 @@ async function main() {
     });
 
     // Commander
-    const c001 = await prisma.user.create({
-        data: {
+    const c001 = await prisma.user.upsert({
+        where: { serviceNumber: 'C-001' },
+        update: {},
+        create: {
             serviceNumber: 'C-001',
             passwordHash: commonPasswordHash,
             firstName: 'נועם',
@@ -86,8 +106,10 @@ async function main() {
     });
 
     // Soldiers in platoon 1
-    await prisma.user.create({
-        data: {
+    await prisma.user.upsert({
+        where: { serviceNumber: 'S-001' },
+        update: {},
+        create: {
             serviceNumber: 'S-001',
             passwordHash: commonPasswordHash,
             firstName: 'יונתן',
@@ -104,8 +126,10 @@ async function main() {
         },
     });
 
-    await prisma.user.create({
-        data: {
+    await prisma.user.upsert({
+        where: { serviceNumber: 'S-102' },
+        update: {},
+        create: {
             serviceNumber: 'S-102',
             passwordHash: commonPasswordHash,
             firstName: 'דנה',
@@ -122,8 +146,10 @@ async function main() {
         },
     });
 
-    await prisma.user.create({
-        data: {
+    await prisma.user.upsert({
+        where: { serviceNumber: 'S-103' },
+        update: {},
+        create: {
             serviceNumber: 'S-103',
             passwordHash: commonPasswordHash,
             firstName: 'אייל',
@@ -141,8 +167,10 @@ async function main() {
     });
 
     // Soldiers in platoon 2
-    await prisma.user.create({
-        data: {
+    await prisma.user.upsert({
+        where: { serviceNumber: 'S-104' },
+        update: {},
+        create: {
             serviceNumber: 'S-104',
             passwordHash: commonPasswordHash,
             firstName: 'מאיה',
@@ -159,8 +187,10 @@ async function main() {
         },
     });
 
-    await prisma.user.create({
-        data: {
+    await prisma.user.upsert({
+        where: { serviceNumber: 'S-105' },
+        update: {},
+        create: {
             serviceNumber: 'S-105',
             passwordHash: commonPasswordHash,
             firstName: 'אורי',
@@ -185,39 +215,52 @@ async function main() {
 
     // ── Geofence Zones ───────────────────────────────────────
 
-    await prisma.geofenceZone.createMany({
-        data: [
-            {
-                name: 'מחנה אלפא — היקף ראשי',
-                shapeType: 'circle',
-                centerLat: 32.08,
-                centerLng: 34.78,
-                radiusMeters: 500,
-                isActive: true,
-                unitId: coyAlpha.id,
-                createdBy: sc001.id,
-            },
-            {
-                name: 'שטח אימונים בראבו',
-                shapeType: 'circle',
-                centerLat: 32.10,
-                centerLng: 34.80,
-                radiusMeters: 300,
-                isActive: true,
-                unitId: coyAlpha.id,
-                createdBy: sc001.id,
-            },
-            {
-                name: 'מחסן אספקה צ\'ארלי',
-                shapeType: 'circle',
-                centerLat: 32.07,
-                centerLng: 34.77,
-                radiusMeters: 150,
-                isActive: false,
-                unitId: coyAlpha.id,
-                createdBy: sc001.id,
-            },
-        ],
+    await prisma.geofenceZone.upsert({
+        where: { id: 'zone-1' },
+        update: {},
+        create: {
+            id: 'zone-1',
+            name: 'מחנה אלפא — היקף ראשי',
+            shapeType: 'circle',
+            centerLat: 32.08,
+            centerLng: 34.78,
+            radiusMeters: 500,
+            isActive: true,
+            unitId: coyAlpha.id,
+            createdBy: sc001.id,
+        },
+    });
+
+    await prisma.geofenceZone.upsert({
+        where: { id: 'zone-2' },
+        update: {},
+        create: {
+            id: 'zone-2',
+            name: 'שטח אימונים בראבו',
+            shapeType: 'circle',
+            centerLat: 32.10,
+            centerLng: 34.80,
+            radiusMeters: 300,
+            isActive: true,
+            unitId: coyAlpha.id,
+            createdBy: sc001.id,
+        },
+    });
+
+    await prisma.geofenceZone.upsert({
+        where: { id: 'zone-3' },
+        update: {},
+        create: {
+            id: 'zone-3',
+            name: 'מחסן אספקה צ\'ארלי',
+            shapeType: 'circle',
+            centerLat: 32.07,
+            centerLng: 34.77,
+            radiusMeters: 150,
+            isActive: false,
+            unitId: coyAlpha.id,
+            createdBy: sc001.id,
+        },
     });
 
     console.log('  ✅ Geofence zones created');
