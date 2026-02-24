@@ -86,7 +86,7 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
 
     return successResponse({
         globalStats: { total, inBase, outOfBase, unknown },
-        units: unitStats.map((u: any) => ({ ...u, children: [] })),
+        units: buildUnitTree(unitStats),
         events: events.map((e: any) => ({
             id: e.id,
             soldierId: e.soldierId,
@@ -100,3 +100,26 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
         })),
     });
 });
+
+// Helper to build recursive tree from flat array for OrgTree
+function buildUnitTree(flatUnits: any[]): any[] {
+    const unitMap = new Map<string, any>();
+    const roots: any[] = [];
+
+    // Initialize map
+    for (const unit of flatUnits) {
+        unitMap.set(unit.id, { ...unit, children: [] });
+    }
+
+    // Build tree
+    for (const unit of flatUnits) {
+        const node = unitMap.get(unit.id);
+        if (unit.parentId && unitMap.has(unit.parentId)) {
+            unitMap.get(unit.parentId).children.push(node);
+        } else {
+            roots.push(node);
+        }
+    }
+
+    return roots;
+}

@@ -104,6 +104,8 @@ function GeofenceManagementView() {
                 });
             }
             queryClient.invalidateQueries({ queryKey: ['zones'] });
+            setShowDrawer(false);
+            setEditZone(null);
         } catch (err) {
             alert('שגיאה בשמירה');
         }

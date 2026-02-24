@@ -9,7 +9,7 @@ import { cn } from '@/shared/utils/cn';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface SidebarProps {
     onClose: () => void;
@@ -31,6 +31,7 @@ const NAV_ITEMS = {
 export function Sidebar({ onClose }: SidebarProps) {
     const { user, logout } = useAuth();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const router = useRouter();
 
     const handleLogout = () => {
@@ -85,9 +86,12 @@ export function Sidebar({ onClose }: SidebarProps) {
                 {items.map((item) => {
                     const hrefPath = item.href.split('?')[0];
                     const hasQuery = item.href.includes('?');
+                    const hrefQS = hasQuery ? item.href.split('?')[1] : '';
+
                     const active = hasQuery
-                        ? pathname === hrefPath && typeof window !== 'undefined' && window.location.search === '?' + item.href.split('?')[1]
-                        : pathname === item.href && (typeof window === 'undefined' || !window.location.search);
+                        ? pathname === hrefPath && searchParams.toString() === hrefQS
+                        : pathname === item.href && (!searchParams.toString() || searchParams.toString() === '');
+
                     return (
                         <Link
                             key={item.href}

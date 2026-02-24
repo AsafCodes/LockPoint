@@ -8,7 +8,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { cn } from '@/shared/utils/cn';
 import { useAuth } from '@/providers/AuthProvider';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
@@ -38,6 +38,7 @@ export function AppShell({ children }: AppShellProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { user, isAuthenticated } = useAuth();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const router = useRouter();
 
     // Redirect to login if not authenticated (e.g. after page refresh)
@@ -132,9 +133,11 @@ export function AppShell({ children }: AppShellProps) {
                             {tabs.map((tab) => {
                                 const hrefPath = tab.href.split('?')[0];
                                 const hasQuery = tab.href.includes('?');
+                                const hrefQS = hasQuery ? tab.href.split('?')[1] : '';
+
                                 const active = hasQuery
-                                    ? pathname === hrefPath && typeof window !== 'undefined' && window.location.search === '?' + tab.href.split('?')[1]
-                                    : pathname === hrefPath && (typeof window === 'undefined' || !window.location.search);
+                                    ? pathname === hrefPath && searchParams.toString() === hrefQS
+                                    : pathname === hrefPath && (!searchParams.toString() || searchParams.toString() === '');
 
                                 return (
                                     <Link

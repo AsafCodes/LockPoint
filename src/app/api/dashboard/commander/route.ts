@@ -75,7 +75,7 @@ export const GET = withRole(['commander', 'senior_commander'], async (req: NextR
             rank: { code: s.rankCode, label: s.rankLabel, level: s.rankLevel },
             unitName: s.unit.name,
         })),
-        units: units.map((u: any) => ({ ...u, children: [], stats: null })),
+        units: buildUnitTree(units.map((u: any) => ({ ...u, stats: null }))),
         zones,
         events: events.map((e: any) => ({
             id: e.id,
@@ -101,4 +101,27 @@ async function getAllChildUnitIds(unitId: string): Promise<string[]> {
         ids.push(...await getAllChildUnitIds(child.id));
     }
     return ids;
+}
+
+// Helper to build recursive tree from flat array for OrgTree
+function buildUnitTree(flatUnits: any[]): any[] {
+    const unitMap = new Map<string, any>();
+    const roots: any[] = [];
+
+    // Initialize map
+    for (const unit of flatUnits) {
+        unitMap.set(unit.id, { ...unit, children: [] });
+    }
+
+    // Build tree
+    for (const unit of flatUnits) {
+        const node = unitMap.get(unit.id);
+        if (unit.parentId && unitMap.has(unit.parentId)) {
+            unitMap.get(unit.parentId).children.push(node);
+        } else {
+            roots.push(node);
+        }
+    }
+
+    return roots;
 }
