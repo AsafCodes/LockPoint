@@ -15,6 +15,7 @@ export interface CommanderDashboardResponse {
     stats: DashboardStats;
     soldiers: Soldier[];
     units: OrgNode[];
+    flatUnits: OrgNode[];
     zones: any[];
     events: any[];
 }
@@ -22,6 +23,7 @@ export interface CommanderDashboardResponse {
 export interface SeniorDashboardResponse {
     globalStats: DashboardStats;
     units: OrgNode[];
+    flatUnits: OrgNode[];
     events: any[];
 }
 

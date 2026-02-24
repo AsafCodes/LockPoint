@@ -76,6 +76,7 @@ export const GET = withRole(['commander', 'senior_commander'], async (req: NextR
             unitName: s.unit.name,
         })),
         units: buildUnitTree(units.map((u: any) => ({ ...u, stats: null }))),
+        flatUnits: units.map((u: any) => ({ ...u, stats: null })),
         zones,
         events: events.map((e: any) => ({
             id: e.id,

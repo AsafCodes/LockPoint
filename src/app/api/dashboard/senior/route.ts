@@ -87,6 +87,7 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
     return successResponse({
         globalStats: { total, inBase, outOfBase, unknown },
         units: buildUnitTree(unitStats),
+        flatUnits: unitStats,
         events: events.map((e: any) => ({
             id: e.id,
             soldierId: e.soldierId,

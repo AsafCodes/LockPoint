@@ -363,7 +363,7 @@ export function GlobalOverview() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {data.units.filter((u: any) => (u.stats?.totalPersonnel || 0) > 0).map((unit: any) => {
+                                    {(data.flatUnits || []).filter((u: any) => (u.stats?.totalPersonnel || 0) > 0).map((unit: any) => {
                                         const total = unit.stats?.totalPersonnel || 0;
                                         const ready = Math.round(((unit.stats?.inBase || 0) / (total || 1)) * 100);
                                         return (
