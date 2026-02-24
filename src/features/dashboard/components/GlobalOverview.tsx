@@ -12,192 +12,13 @@ import { cn } from '@/shared/utils/cn';
 import { t } from '@/lib/i18n';
 import type { OrgNode } from '@/features/hierarchy/types';
 import { useSeniorDashboard } from '@/lib/api/hooks';
-import { DynamicTacticalMap } from '@/features/map';
+import { DynamicTacticalMap, DynamicZoneDrawer } from '@/features/map';
+import type { Vertex } from '@/features/map';
 import { apiClient } from '@/lib/api/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Demo data removed - using real API from /api/zones
 
-
-// ── Zone Form Modal ─────────────────────────────────────────
-
-interface ZoneFormData {
-    name: string;
-    description?: string;
-    shapeType: 'circle' | 'polygon';
-    centerLat: number;
-    centerLng: number;
-    radiusMeters: number;
-    isActive: boolean;
-    unitId: string;
-}
-
-interface ZoneModalProps {
-    zone?: any; // null for create, zone object for edit
-    onClose: () => void;
-    onSaved: () => void;
-}
-
-function ZoneFormModal({ zone, onClose, onSaved }: ZoneModalProps) {
-    const isEdit = !!zone;
-    const [form, setForm] = useState<ZoneFormData>({
-        name: zone?.name || '',
-        description: zone?.description || '',
-        shapeType: zone?.shapeType || 'circle',
-        centerLat: zone?.centerLat || 32.08,
-        centerLng: zone?.centerLng || 34.78,
-        radiusMeters: zone?.radiusMeters || 500,
-        isActive: zone?.isActive ?? true,
-        unitId: zone?.unitId || '',
-    });
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        setError('');
-        try {
-            if (isEdit) {
-                await apiClient.put(`/zones/${zone.id}`, {
-                    name: form.name,
-                    description: form.description,
-                    centerLat: form.centerLat,
-                    centerLng: form.centerLng,
-                    radiusMeters: form.radiusMeters,
-                    isActive: form.isActive,
-                });
-            } else {
-                await apiClient.post('/zones', form);
-            }
-            onSaved();
-            onClose();
-        } catch (err: any) {
-            setError(err?.message || 'שגיאה בשמירה');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div
-                className="bg-onyx border border-border-subtle rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6 animate-slide-up"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <h3 className="text-lg font-bold text-text-primary mb-4">
-                    {isEdit ? t.geofenceMgmt.editZone : t.geofenceMgmt.createZone}
-                </h3>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Zone Name */}
-                    <div>
-                        <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.name}</label>
-                        <input
-                            type="text"
-                            value={form.name}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                            required
-                            className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
-                        />
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                        <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.description}</label>
-                        <input
-                            type="text"
-                            value={form.description || ''}
-                            onChange={(e) => setForm({ ...form, description: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
-                        />
-                    </div>
-
-                    {/* Coordinates Row */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.centerLat}</label>
-                            <input
-                                type="number"
-                                step="0.0001"
-                                value={form.centerLat}
-                                onChange={(e) => setForm({ ...form, centerLat: parseFloat(e.target.value) || 0 })}
-                                required
-                                className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm data-mono focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.centerLng}</label>
-                            <input
-                                type="number"
-                                step="0.0001"
-                                value={form.centerLng}
-                                onChange={(e) => setForm({ ...form, centerLng: parseFloat(e.target.value) || 0 })}
-                                required
-                                className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm data-mono focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Radius */}
-                    <div>
-                        <label className="block text-xs font-medium text-text-muted mb-1.5">{t.geofenceMgmt.radius}</label>
-                        <input
-                            type="number"
-                            min="10"
-                            max="50000"
-                            value={form.radiusMeters}
-                            onChange={(e) => setForm({ ...form, radiusMeters: parseInt(e.target.value) || 500 })}
-                            required
-                            className="w-full px-3 py-2.5 rounded-lg bg-slate-dark border border-border-subtle text-text-primary text-sm data-mono focus:outline-none focus:ring-2 focus:ring-signal-green/50 focus:border-signal-green"
-                        />
-                    </div>
-
-                    {/* Active Toggle */}
-                    <div className="flex items-center gap-3">
-                        <label className="text-xs font-medium text-text-muted">{t.geofenceMgmt.active}</label>
-                        <button
-                            type="button"
-                            onClick={() => setForm({ ...form, isActive: !form.isActive })}
-                            className={cn(
-                                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                                form.isActive ? 'bg-signal-green' : 'bg-slate-dark border border-border-subtle'
-                            )}
-                        >
-                            <span className={cn(
-                                'inline-block h-4 w-4 rounded-full bg-white transition-transform',
-                                form.isActive ? 'translate-x-6' : 'translate-x-1'
-                            )} />
-                        </button>
-                    </div>
-
-                    {/* Error */}
-                    {error && (
-                        <div className="text-xs text-danger-red bg-danger-red/10 px-3 py-2 rounded-lg">{error}</div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="submit"
-                            disabled={saving || !form.name}
-                            className="flex-1 px-4 py-2.5 rounded-lg bg-signal-green text-midnight font-bold text-sm transition-all hover:bg-signal-green/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {saving ? t.geofenceMgmt.saving : t.geofenceMgmt.save}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2.5 rounded-lg border border-border-subtle text-text-secondary text-sm font-medium hover:bg-slate-dark transition-all"
-                        >
-                            {t.geofenceMgmt.cancel}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
 
 // ── Delete Confirmation Dialog ──────────────────────────────
 
@@ -247,8 +68,8 @@ function DeleteConfirmDialog({ zone, onClose, onDeleted }: { zone: any; onClose:
 
 function GeofenceManagementView() {
     const queryClient = useQueryClient();
-    const [formZone, setFormZone] = useState<any | null>(null); // null = closed, {} = create, zone = edit
-    const [showForm, setShowForm] = useState(false);
+    const [showDrawer, setShowDrawer] = useState(false);
+    const [editZone, setEditZone] = useState<any | null>(null);
     const [deleteZone, setDeleteZone] = useState<any | null>(null);
 
     // Fetch real zones from API
@@ -259,8 +80,33 @@ function GeofenceManagementView() {
 
     const allZones = zones || [];
 
-    const handleSaved = () => {
-        queryClient.invalidateQueries({ queryKey: ['zones'] });
+    const handleSaved = async (data: { name: string; vertices: Vertex[]; centerLat: number; centerLng: number }) => {
+        try {
+            if (editZone) {
+                // Edit existing zone
+                await apiClient.put(`/zones/${editZone.id}`, {
+                    name: data.name,
+                    shapeType: 'polygon',
+                    vertices: JSON.stringify(data.vertices),
+                    centerLat: data.centerLat,
+                    centerLng: data.centerLng,
+                });
+            } else {
+                // Create new zone
+                await apiClient.post('/zones', {
+                    name: data.name,
+                    shapeType: 'polygon',
+                    vertices: data.vertices,
+                    centerLat: data.centerLat,
+                    centerLng: data.centerLng,
+                    isActive: true,
+                    unitId: allZones[0]?.unitId || 'coy-alpha', // inherit from existing or default
+                });
+            }
+            queryClient.invalidateQueries({ queryKey: ['zones'] });
+        } catch (err) {
+            alert('שגיאה בשמירה');
+        }
     };
 
     const handleDeleted = () => {
@@ -268,13 +114,29 @@ function GeofenceManagementView() {
     };
 
     const openCreate = () => {
-        setFormZone(null);
-        setShowForm(true);
+        setEditZone(null);
+        setShowDrawer(true);
     };
 
     const openEdit = (zone: any) => {
-        setFormZone(zone);
-        setShowForm(true);
+        setEditZone(zone);
+        setShowDrawer(true);
+    };
+
+    // Parse vertices from a zone for edit mode
+    const getZoneVertices = (zone: any): Vertex[] | null => {
+        if (!zone?.vertices) return null;
+        try {
+            return typeof zone.vertices === 'string' ? JSON.parse(zone.vertices) : zone.vertices;
+        } catch {
+            return null;
+        }
+    };
+
+    // Count vertices for display
+    const getVertexCount = (zone: any): number => {
+        const v = getZoneVertices(zone);
+        return v ? v.length : 0;
     };
 
     return (
@@ -323,7 +185,7 @@ function GeofenceManagementView() {
                             </div>
                             <div className="flex gap-4 text-xs text-text-muted">
                                 <span>{t.geofenceMgmt.type}: <span className="text-info-blue">{zone.shapeType}</span></span>
-                                <span>{t.soldier.radius}: <span className="data-mono text-text-secondary">{zone.radiusMeters}m</span></span>
+                                <span>נקודות: <span className="data-mono text-text-secondary">{getVertexCount(zone)}</span></span>
                             </div>
                             <div className="flex gap-2 pt-1">
                                 <button onClick={() => openEdit(zone)} className="text-xs px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary touch-target hover:bg-slate-dark transition-all">
@@ -344,7 +206,7 @@ function GeofenceManagementView() {
                             <tr className="border-b border-border-subtle">
                                 <th className="px-4 py-2 text-start text-xs font-medium uppercase tracking-wider text-text-muted">{t.geofenceMgmt.zoneName}</th>
                                 <th className="px-4 py-2 text-start text-xs font-medium uppercase tracking-wider text-text-muted">{t.geofenceMgmt.type}</th>
-                                <th className="px-4 py-2 text-start text-xs font-medium uppercase tracking-wider text-text-muted">{t.geofenceMgmt.radiusM}</th>
+                                <th className="px-4 py-2 text-start text-xs font-medium uppercase tracking-wider text-text-muted">נקודות</th>
                                 <th className="px-4 py-2 text-start text-xs font-medium uppercase tracking-wider text-text-muted">{t.geofenceMgmt.coordinates}</th>
                                 <th className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-text-muted">{t.status.active}</th>
                                 <th className="px-4 py-2 text-start text-xs font-medium uppercase tracking-wider text-text-muted">{t.geofenceMgmt.actions}</th>
@@ -359,7 +221,7 @@ function GeofenceManagementView() {
                                             {zone.shapeType}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-text-secondary data-mono">{zone.radiusMeters}</td>
+                                    <td className="px-4 py-3 text-sm text-text-secondary data-mono">{getVertexCount(zone)}</td>
                                     <td className="px-4 py-3 text-xs text-text-muted data-mono">
                                         {zone.centerLat?.toFixed(4)}, {zone.centerLng?.toFixed(4)}
                                     </td>
@@ -389,12 +251,13 @@ function GeofenceManagementView() {
                 </div>
             </TacticalCard>
 
-            {/* Zone Form Modal */}
-            {showForm && (
-                <ZoneFormModal
-                    zone={formZone}
-                    onClose={() => setShowForm(false)}
-                    onSaved={handleSaved}
+            {/* Zone Drawer Modal */}
+            {showDrawer && (
+                <DynamicZoneDrawer
+                    initialVertices={editZone ? getZoneVertices(editZone) : null}
+                    initialName={editZone?.name}
+                    onSave={handleSaved}
+                    onClose={() => { setShowDrawer(false); setEditZone(null); }}
                 />
             )}
 

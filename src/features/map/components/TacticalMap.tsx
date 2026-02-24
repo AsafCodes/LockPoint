@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon as LeafletPolygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -32,6 +32,7 @@ export interface MapZone {
     centerLat: number | null;
     centerLng: number | null;
     radiusMeters: number | null;
+    vertices?: string | null; // JSON-encoded [{lat,lng},...]
     isActive: boolean;
 }
 
@@ -96,7 +97,14 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
             if (s.lat && s.lng) points.push([s.lat, s.lng]);
         });
         zones.forEach((z) => {
-            if (z.centerLat && z.centerLng) points.push([z.centerLat, z.centerLng]);
+            if (z.vertices) {
+                try {
+                    const verts = typeof z.vertices === 'string' ? JSON.parse(z.vertices) : z.vertices;
+                    verts.forEach((v: { lat: number; lng: number }) => points.push([v.lat, v.lng]));
+                } catch { /* skip */ }
+            } else if (z.centerLat && z.centerLng) {
+                points.push([z.centerLat, z.centerLng]);
+            }
         });
 
         // Default to Israel if no data
@@ -134,31 +142,68 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
                 {/* Auto-fit bounds to all data points */}
                 <FitBounds points={allPoints} />
 
-                {/* Geofence zone overlays */}
-                {zones.filter((z) => z.isActive && z.centerLat && z.centerLng).map((zone) => (
-                    <Circle
-                        key={zone.id}
-                        center={[zone.centerLat!, zone.centerLng!]}
-                        radius={zone.radiusMeters || 500}
-                        pathOptions={{
-                            color: '#22c55e',
-                            fillColor: '#22c55e',
-                            fillOpacity: 0.06,
-                            weight: 1.5,
-                            dashArray: '6 4',
-                        }}
-                    >
-                        <Popup>
-                            <div style={{ fontFamily: 'system-ui', direction: 'rtl', color: '#0a0f1a' }}>
-                                <strong>{zone.name}</strong>
-                                <br />
-                                <span style={{ fontSize: '11px', color: '#666' }}>
-                                    רדיוס: {zone.radiusMeters}m
-                                </span>
-                            </div>
-                        </Popup>
-                    </Circle>
-                ))}
+                {/* Geofence zone overlays — polygons + circles */}
+                {zones.filter((z) => z.isActive).map((zone) => {
+                    // Polygon zones
+                    if (zone.vertices) {
+                        try {
+                            const verts = typeof zone.vertices === 'string' ? JSON.parse(zone.vertices) : zone.vertices;
+                            if (Array.isArray(verts) && verts.length >= 3) {
+                                return (
+                                    <LeafletPolygon
+                                        key={zone.id}
+                                        positions={verts.map((v: { lat: number; lng: number }) => [v.lat, v.lng] as [number, number])}
+                                        pathOptions={{
+                                            color: '#22c55e',
+                                            fillColor: '#22c55e',
+                                            fillOpacity: 0.08,
+                                            weight: 2,
+                                            dashArray: '6 4',
+                                        }}
+                                    >
+                                        <Popup>
+                                            <div style={{ fontFamily: 'system-ui', direction: 'rtl', color: '#0a0f1a' }}>
+                                                <strong>{zone.name}</strong>
+                                                <br />
+                                                <span style={{ fontSize: '11px', color: '#666' }}>
+                                                    {verts.length} נקודות
+                                                </span>
+                                            </div>
+                                        </Popup>
+                                    </LeafletPolygon>
+                                );
+                            }
+                        } catch { /* skip invalid */ }
+                    }
+                    // Circle zones (legacy)
+                    if (zone.centerLat && zone.centerLng) {
+                        return (
+                            <Circle
+                                key={zone.id}
+                                center={[zone.centerLat!, zone.centerLng!]}
+                                radius={zone.radiusMeters || 500}
+                                pathOptions={{
+                                    color: '#22c55e',
+                                    fillColor: '#22c55e',
+                                    fillOpacity: 0.06,
+                                    weight: 1.5,
+                                    dashArray: '6 4',
+                                }}
+                            >
+                                <Popup>
+                                    <div style={{ fontFamily: 'system-ui', direction: 'rtl', color: '#0a0f1a' }}>
+                                        <strong>{zone.name}</strong>
+                                        <br />
+                                        <span style={{ fontSize: '11px', color: '#666' }}>
+                                            רדיוס: {zone.radiusMeters}m
+                                        </span>
+                                    </div>
+                                </Popup>
+                            </Circle>
+                        );
+                    }
+                    return null;
+                })}
 
                 {/* Soldier markers */}
                 {soldiers.filter((s) => s.lat && s.lng).map((soldier) => (

@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-23 (v0.4.0)
+> Updated: 2026-02-24 (v0.4.1)
 
 ---
 
@@ -67,7 +67,29 @@
 | **DailyUnitSummary Model (BI)** | ✅ Done | `prisma/schema.prisma` |
 | **NotificationBell UI** | ✅ Done | `src/shared/components/NotificationBell.tsx` |
 | **Alert Thresholds Config** | ✅ Done | `src/lib/constants.ts` |
+| **Seed Idempotency (upsert)** | ✅ Done | `prisma/seed.ts` |
 | **Version Bump to v0.4.0** | ✅ Done | `package.json` |
+
+---
+
+## v0.4.1-Alpha — Map-Based Polygon Zone Creation ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **ZoneDrawer (Leaflet + Draw)** | ✅ Done | `src/features/map/components/ZoneDrawer.tsx` |
+| **SSR-safe ZoneDrawer Loader** | ✅ Done | `src/features/map/components/DynamicZoneDrawer.tsx` |
+| **Location Search (Nominatim)** | ✅ Done | `ZoneDrawer.tsx` (LocationSearch component) |
+| **Polygon Drawing Controls** | ✅ Done | `ZoneDrawer.tsx` (leaflet-draw integration) |
+| **TacticalMap Polygon Rendering** | ✅ Done | `src/features/map/components/TacticalMap.tsx` |
+| **GlobalOverview — Drawer Integration** | ✅ Done | `src/features/dashboard/components/GlobalOverview.tsx` |
+| **Zones API — vertices in PUT** | ✅ Done | `src/app/api/zones/[id]/route.ts` |
+| **Version Bump to v0.4.1** | ✅ Done | `package.json` |
+
+**Impact on existing features:**
+- v0.3.0 **TacticalMap** — now renders both polygons and legacy circles
+- v0.3.0 **Geofence Mgmt** in GlobalOverview — form modal replaced with map drawer
+- v0.1.0 **Zones CRUD API** — PUT now accepts `vertices` + `shapeType`
+- v0.2.0 **Auto ENTER/EXIT Detection** — ⚠️ Future: needs point-in-polygon check for polygon zones
 
 ---
 
@@ -75,7 +97,8 @@
 
 | Feature | Priority | Version |
 |---------|----------|---------|
-| Daily Summary Cron (nightly aggregation) | 🟡 Medium | v0.4.1 |
+| Point-in-Polygon Geofence Check | 🔴 High | v0.5.0 |
+| Daily Summary Cron (nightly aggregation) | 🟡 Medium | v0.5.0 |
 | Password Reset / First Login | 🟢 Low | v0.5.0 |
 | Export PDF/Excel Reports | 🟢 Low | v0.5.0 |
 | Admin Panel (user management) | 🟢 Low | v0.5.0 |

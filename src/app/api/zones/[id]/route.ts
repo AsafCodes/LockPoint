@@ -14,9 +14,11 @@ import type { TokenPayload } from '@/lib/auth/jwt';
 const updateZoneSchema = z.object({
     name: z.string().min(1).optional(),
     description: z.string().optional(),
+    shapeType: z.enum(['circle', 'polygon']).optional(),
     centerLat: z.number().optional(),
     centerLng: z.number().optional(),
     radiusMeters: z.number().positive().optional(),
+    vertices: z.string().optional(), // JSON-encoded [{lat,lng},...]
     isActive: z.boolean().optional(),
 });
 

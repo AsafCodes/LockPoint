@@ -122,6 +122,8 @@ export const t = {
         deleteConfirmBody: 'פעולה זו לא ניתנת לביטול.',
         saving: 'שומר...',
         deleting: 'מוחק...',
+        searchLocation: 'חפש מיקום...',
+        drawInstruction: 'חפש מיקום ואז לחץ על כפתור המצולע בצד שמאל כדי לצייר את גבולות האזור',
     },
 
     // ── Geofence Overlay (Breach) ────────────────────────
