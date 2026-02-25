@@ -23,7 +23,7 @@
 
   /* Tactical Fonts */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  --font-sans: 'Noto Sans Hebrew', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Heebo', 'Inter', system-ui, -apple-system, sans-serif;
 
   /* Command breakpoint */
   --breakpoint-command: 1920px;
