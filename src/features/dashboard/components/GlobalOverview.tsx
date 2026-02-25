@@ -108,8 +108,9 @@ function GeofenceManagementView() {
             queryClient.invalidateQueries({ queryKey: ['zones'] });
             setShowDrawer(false);
             setEditZone(null);
-        } catch (err) {
-            alert('שגיאה בשמירה');
+        } catch (err: any) {
+            console.error('[Zone Save Error]', err);
+            alert(`שגיאה בשמירה: ${err?.message || JSON.stringify(err)}`);
         }
     };
 
