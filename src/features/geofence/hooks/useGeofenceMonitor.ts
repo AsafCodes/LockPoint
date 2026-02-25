@@ -93,6 +93,7 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
     const zonesRef = useRef<GeofenceZone[]>([]);
     const unsubGpsRef = useRef<(() => void) | null>(null);
     const unsubTransitionRef = useRef<(() => void) | null>(null);
+    const hasSyncedInitialLocationRef = useRef<boolean>(false);
 
     // ── Fetch zones from API ────────────────────────────────
 
@@ -185,15 +186,30 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
             tm.processLocation(location, acc);
 
             // Check if currently inside any zone (for initial state)
+            let isInside = false;
+            let currentZone = null;
+
             for (const zone of zonesRef.current) {
                 if (isInsideGeofence(location, zone.shape)) {
-                    setIsInsideZone(true);
-                    setCurrentZoneName(zone.name);
-                    return;
+                    isInside = true;
+                    currentZone = zone.name;
+                    break;
                 }
             }
-            setIsInsideZone(false);
-            setCurrentZoneName(null);
+
+            setIsInsideZone(isInside);
+            setCurrentZoneName(currentZone);
+
+            // Forcefully sync the very first location with the backend to fix initial state discrepancies
+            if (!hasSyncedInitialLocationRef.current) {
+                hasSyncedInitialLocationRef.current = true;
+                apiClient.post('/events/sync', {
+                    lat: location.lat,
+                    lng: location.lng,
+                    accuracy: acc,
+                    isInsideZone: isInside
+                }).catch(err => console.error('[Geofence] Initial sync failed:', err));
+            }
         });
 
         try {
@@ -225,6 +241,7 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
             transitionRef.current.reset();
             transitionRef.current = null;
         }
+        hasSyncedInitialLocationRef.current = false;
         setIsMonitoring(false);
         setGpsStatus('idle');
     }, []);

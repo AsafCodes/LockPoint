@@ -14,6 +14,7 @@ export type AuditAction =
     | 'UPDATE_ZONE'
     | 'DELETE_ZONE'
     | 'GEOFENCE_EVENT'
+    | 'GEOFENCE_SYNC'
     | 'SUBMIT_REPORT'
     | 'VIEW_SOLDIERS'
     | 'VIEW_DASHBOARD';
