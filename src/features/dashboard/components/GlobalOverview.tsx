@@ -16,6 +16,7 @@ import { DynamicTacticalMap, DynamicZoneDrawer } from '@/features/map';
 import type { Vertex } from '@/features/map';
 import { apiClient } from '@/lib/api/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/providers/AuthProvider';
 
 // Demo data removed - using real API from /api/zones
 
@@ -68,6 +69,7 @@ function DeleteConfirmDialog({ zone, onClose, onDeleted }: { zone: any; onClose:
 
 function GeofenceManagementView() {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
     const [showDrawer, setShowDrawer] = useState(false);
     const [editZone, setEditZone] = useState<any | null>(null);
     const [deleteZone, setDeleteZone] = useState<any | null>(null);
@@ -100,7 +102,7 @@ function GeofenceManagementView() {
                     centerLat: data.centerLat,
                     centerLng: data.centerLng,
                     isActive: true,
-                    unitId: allZones[0]?.unitId || 'coy-alpha', // inherit from existing or default
+                    unitId: allZones[0]?.unitId || user?.unitId || 'bn-7490', // fallback to user's unit
                 });
             }
             queryClient.invalidateQueries({ queryKey: ['zones'] });
