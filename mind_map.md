@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-24 (v0.4.3)
+> Updated: 2026-02-25 (v0.5.0)
 
 ---
 
@@ -126,14 +126,29 @@
 
 ---
 
+## v0.5.0-Alpha — Server-Side Point-in-Polygon Geofence Check ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Shared Geo Calculator (server-safe)** | ✅ Done | `src/lib/geo/geofence-calc.ts` — `isInsideZone`, `isPointInPolygon`, `haversineDistance` |
+| **Cron Rule D: Spatial Re-evaluation** | ✅ Done | `check-alerts/route.ts` — auto-corrects stale statuses using polygon/circle checks |
+| **Client Calculator DRY Refactor** | ✅ Done | `calculator.ts` — re-exports from shared module |
+| **Version Bump to v0.5.0** | ✅ Done | `package.json` |
+
+**Impact on existing features:**
+- v0.4.0 **Cron Alert Checker** — now spatially verifies soldier positions (Rule D)
+- v0.2.0 **Client Geofence Engine** — math functions shared with server, no duplication
+- v0.1.0 **Soldier Status** — auto-corrected when position disagrees with stale status
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |
 |---------|----------|---------|
-| Point-in-Polygon Geofence Check | 🔴 High | v0.5.0 |
-| Daily Summary Cron (nightly aggregation) | 🟡 Medium | v0.5.0 |
-| Password Reset / First Login | 🟢 Low | v0.5.0 |
-| Export PDF/Excel Reports | 🟢 Low | v0.5.0 |
-| Admin Panel (user management) | 🟢 Low | v0.5.0 |
+| Daily Summary Cron (nightly aggregation) | 🟡 Medium | v0.5.1 |
+| Password Reset / First Login | 🟢 Low | v0.5.1 |
+| Export PDF/Excel Reports | 🟢 Low | v0.5.1 |
+| Admin Panel (user management) | 🟢 Low | v0.5.1 |
 | Background Location (Capacitor) | 🟡 Medium | v0.6.0 |
 | Offline Mode + Sync | 🟢 Low | v0.6.0 |

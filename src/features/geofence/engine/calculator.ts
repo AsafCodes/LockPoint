@@ -1,53 +1,18 @@
 // ─────────────────────────────────────────────────────────────
-// LockPoint — Geofence Calculation Engine (Pure Functions)
+// LockPoint — Geofence Calculation Engine (Client-Side)
+// ─────────────────────────────────────────────────────────────
+// Re-exports core math from the shared server-safe module,
+// and adds higher-level functions (transition detection, etc.)
 // ─────────────────────────────────────────────────────────────
 
 import type { LatLng, GeofenceZone, GeofenceShape, GeofenceTransition } from '../types';
 
-/** Earth radius in meters */
-const EARTH_RADIUS = 6_371_000;
-
-/** Convert degrees to radians */
-function toRad(deg: number): number {
-    return (deg * Math.PI) / 180;
-}
+// Re-export core math from shared module
+export { haversineDistance, isPointInPolygon, getPolygonCentroid } from '@/lib/geo/geofence-calc';
+import { haversineDistance, isPointInPolygon, getPolygonCentroid } from '@/lib/geo/geofence-calc';
 
 /**
- * Haversine distance between two points in meters
- */
-export function haversineDistance(a: LatLng, b: LatLng): number {
-    const dLat = toRad(b.lat - a.lat);
-    const dLng = toRad(b.lng - a.lng);
-    const sinLat = Math.sin(dLat / 2);
-    const sinLng = Math.sin(dLng / 2);
-    const h = sinLat * sinLat + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * sinLng * sinLng;
-    return 2 * EARTH_RADIUS * Math.asin(Math.sqrt(h));
-}
-
-/**
- * Ray-casting algorithm — checks if a point is inside a polygon
- */
-export function isPointInPolygon(point: LatLng, vertices: LatLng[]): boolean {
-    let inside = false;
-    const n = vertices.length;
-
-    for (let i = 0, j = n - 1; i < n; j = i++) {
-        const vi = vertices[i];
-        const vj = vertices[j];
-
-        if (
-            vi.lng > point.lng !== vj.lng > point.lng &&
-            point.lat < ((vj.lat - vi.lat) * (point.lng - vi.lng)) / (vj.lng - vi.lng) + vi.lat
-        ) {
-            inside = !inside;
-        }
-    }
-
-    return inside;
-}
-
-/**
- * Check if a point is inside a geofence zone
+ * Check if a point is inside a geofence zone (using typed GeofenceShape)
  */
 export function isInsideGeofence(point: LatLng, shape: GeofenceShape): boolean {
     switch (shape.type) {
@@ -66,11 +31,11 @@ export function checkGeofenceTransition(
     currentLocation: LatLng,
     zone: GeofenceZone
 ): GeofenceTransition {
-    const wasinside = isInsideGeofence(prevLocation, zone.shape);
+    const wasInside = isInsideGeofence(prevLocation, zone.shape);
     const isInside = isInsideGeofence(currentLocation, zone.shape);
 
-    if (!wasinside && isInside) return 'ENTER';
-    if (wasinside && !isInside) return 'EXIT';
+    if (!wasInside && isInside) return 'ENTER';
+    if (wasInside && !isInside) return 'EXIT';
     return 'STAY';
 }
 
@@ -100,16 +65,4 @@ export function findNearestZone(
     }
 
     return nearest;
-}
-
-/**
- * Calculate centroid of a polygon
- */
-function getPolygonCentroid(vertices: LatLng[]): LatLng {
-    const n = vertices.length;
-    const sum = vertices.reduce(
-        (acc, v) => ({ lat: acc.lat + v.lat, lng: acc.lng + v.lng }),
-        { lat: 0, lng: 0 }
-    );
-    return { lat: sum.lat / n, lng: sum.lng / n };
 }

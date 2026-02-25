@@ -17,6 +17,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { successResponse } from '@/lib/auth/middleware';
 import { NOTIFICATIONS } from '@/lib/constants';
+import { isInsideZone } from '@/lib/geo/geofence-calc';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,7 @@ export async function GET(_req: NextRequest) {
     const now = new Date();
     let ruleB_count = 0;
     let ruleC_count = 0;
+    let ruleD_count = 0;
     let snapshot_count = 0;
 
     // ── Rule B: EXIT without report ──────────────────────────
@@ -130,6 +132,91 @@ export async function GET(_req: NextRequest) {
         }
     }
 
+    // ── Rule D: Spatial Re-evaluation ─────────────────────────
+    // Check if each soldier's last known position matches their
+    // current status. Auto-correct stale statuses.
+    const activeZones = await prisma.geofenceZone.findMany({
+        where: { isActive: true },
+        select: {
+            id: true, name: true, shapeType: true,
+            centerLat: true, centerLng: true, radiusMeters: true,
+            vertices: true,
+        },
+    });
+
+    if (activeZones.length > 0) {
+        const soldiersWithLocation = await prisma.user.findMany({
+            where: {
+                role: 'soldier',
+                lastKnownLat: { not: null },
+                lastKnownLng: { not: null },
+            },
+            select: {
+                id: true, firstName: true, lastName: true,
+                rankCode: true, unitId: true,
+                currentStatus: true,
+                lastKnownLat: true, lastKnownLng: true,
+            },
+        });
+
+        for (const soldier of soldiersWithLocation) {
+            const lat = soldier.lastKnownLat!;
+            const lng = soldier.lastKnownLng!;
+
+            // Check if inside ANY active zone
+            let insideZone: { id: string; name: string } | null = null;
+            for (const zone of activeZones) {
+                if (isInsideZone(lat, lng, zone)) {
+                    insideZone = { id: zone.id, name: zone.name };
+                    break;
+                }
+            }
+
+            const spatialStatus = insideZone ? 'in_base' : 'out_of_base';
+            const currentStatus = soldier.currentStatus;
+
+            // Only correct if there's a mismatch (and status isn't 'unknown')
+            if (currentStatus !== 'unknown' && currentStatus !== spatialStatus) {
+                // Auto-correct status
+                await prisma.user.update({
+                    where: { id: soldier.id },
+                    data: { currentStatus: spatialStatus },
+                });
+
+                // Create audit event
+                const transition = spatialStatus === 'in_base' ? 'ENTER' : 'EXIT';
+                await prisma.geofenceEvent.create({
+                    data: {
+                        soldierId: soldier.id,
+                        zoneId: insideZone?.id || activeZones[0].id,
+                        transition,
+                        lat,
+                        lng,
+                        accuracy: 0, // server-side correction
+                    },
+                });
+
+                // Notify commanders
+                const commanders = await findCommandersForUnit(soldier.unitId);
+                for (const cmdId of commanders) {
+                    await prisma.notification.create({
+                        data: {
+                            userId: cmdId,
+                            type: 'STATUS_CORRECTION',
+                            title: `${soldier.rankCode} ${soldier.lastName} — תיקון סטטוס אוטומטי`,
+                            body: spatialStatus === 'in_base'
+                                ? `נמצא בתוך ${insideZone!.name} — סטטוס עודכן ל"בבסיס".`
+                                : `לא נמצא בתוך אף אזור — סטטוס עודכן ל"מחוץ לבסיס".`,
+                            relatedId: soldier.id,
+                        },
+                    });
+                }
+
+                ruleD_count++;
+            }
+        }
+    }
+
     // ── BI: Capture StatusSnapshots ──────────────────────────
     const allSoldiers = await prisma.user.findMany({
         where: { role: 'soldier' },
@@ -155,7 +242,7 @@ export async function GET(_req: NextRequest) {
     return successResponse({
         ok: true,
         timestamp: now.toISOString(),
-        alerts: { ruleB: ruleB_count, ruleC: ruleC_count },
+        alerts: { ruleB: ruleB_count, ruleC: ruleC_count, ruleD: ruleD_count },
         snapshots: snapshot_count,
     });
 }
