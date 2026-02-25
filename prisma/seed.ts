@@ -25,7 +25,7 @@ async function main() {
     console.log('  ✅ Old data cleared');
 
     // Hash the default password for all demo users
-    const commonPasswordHash = await bcrypt.hash('Lockpoint2026!', SALT_ROUNDS);
+    const commonPasswordHash = await bcrypt.hash('LP1234', SALT_ROUNDS);
 
     // ── Units (Hierarchy) ────────────────────────────────────
 
@@ -226,6 +226,8 @@ async function main() {
     console.log('  ✅ Commanders linked');
 
     // ── Geofence Zones ───────────────────────────────────────
+    // Geofence zones are designated by the Senior Commander (SC-001)
+    // and apply to the units under their command.
 
     await prisma.geofenceZone.upsert({
         where: { id: 'zone-1' },
@@ -238,7 +240,7 @@ async function main() {
             centerLng: 34.78,
             radiusMeters: 500,
             isActive: true,
-            unitId: bn7490.id,
+            unitId: bn7490.id, // Attached to Battalion (SC-001's level)
             createdBy: masterSc.id,
         },
     });
@@ -248,14 +250,14 @@ async function main() {
         update: {},
         create: {
             id: 'zone-2',
-            name: 'מתחם לוגיסטיקה',
+            name: 'מתחם אימונים ומטווחים',
             shapeType: 'circle',
             centerLat: 32.10,
             centerLng: 34.80,
             radiusMeters: 300,
             isActive: true,
-            unitId: coyLog.id,
-            createdBy: israelC.id,
+            unitId: bn7490.id, // Attached to Battalion (SC-001's level)
+            createdBy: masterSc.id,
         },
     });
 
@@ -263,7 +265,7 @@ async function main() {
     console.log('');
     console.log('🎉 Seed complete!');
     console.log('\n');
-    console.log('Development Test Credentials (Password for all: Lockpoint2026!):');
+    console.log('Development Test Credentials (Password for all: LP1234):');
     console.log('  master  (SC-001)  — אסף שוחט (רואה הכל)');
     console.log('  8494326 (C-001)   — אסף שוחט (מפקד גדוד)');
     console.log('  7652679 (C-001)   — שאולי שאולוב (מפקד גדוד)');
