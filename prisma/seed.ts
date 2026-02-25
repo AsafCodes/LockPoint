@@ -29,108 +29,90 @@ async function main() {
 
     // ── Units (Hierarchy) ────────────────────────────────────
 
-    const cmdNorth = await prisma.unit.upsert({
-        where: { id: 'cmd-north' },
+    const bn7490 = await prisma.unit.upsert({
+        where: { id: 'bn-7490' },
         update: {},
-        create: { id: 'cmd-north', name: 'פיקוד צפון', type: 'command' },
+        create: { id: 'bn-7490', name: 'גדוד 7490', type: 'battalion' },
     });
 
-    const bde7 = await prisma.unit.upsert({
-        where: { id: 'bde-7' },
+    const coyTaagad = await prisma.unit.upsert({
+        where: { id: 'coy-taagad' },
         update: {},
-        create: { id: 'bde-7', name: 'חטיבה 7', type: 'brigade', parentId: cmdNorth.id },
+        create: { id: 'coy-taagad', name: 'תאגד', type: 'company', parentId: bn7490.id },
     });
 
-    const bde35 = await prisma.unit.upsert({
-        where: { id: 'bde-35' },
+    const coyLog = await prisma.unit.upsert({
+        where: { id: 'coy-log' },
         update: {},
-        create: { id: 'bde-35', name: 'חטיבה 35', type: 'brigade', parentId: cmdNorth.id },
+        create: { id: 'coy-log', name: 'לוגיסטיקה', type: 'company', parentId: bn7490.id },
     });
 
-    const bn71 = await prisma.unit.upsert({
-        where: { id: 'bn-71' },
+    const coyKesher = await prisma.unit.upsert({
+        where: { id: 'coy-kesher' },
         update: {},
-        create: { id: 'bn-71', name: 'גדוד 71', type: 'battalion', parentId: bde7.id },
+        create: { id: 'coy-kesher', name: 'קשר', type: 'company', parentId: bn7490.id },
     });
 
-    const bn72 = await prisma.unit.upsert({
-        where: { id: 'bn-72' },
+    const coyMafgad = await prisma.unit.upsert({
+        where: { id: 'coy-mafgad' },
         update: {},
-        create: { id: 'bn-72', name: 'גדוד 72', type: 'battalion', parentId: bde7.id },
-    });
-
-    const coyAlpha = await prisma.unit.upsert({
-        where: { id: 'coy-alpha' },
-        update: {},
-        create: { id: 'coy-alpha', name: 'פלוגה א\'', type: 'company', parentId: bn71.id },
-    });
-
-    const plt1 = await prisma.unit.upsert({
-        where: { id: 'plt-1' },
-        update: {},
-        create: { id: 'plt-1', name: 'מחלקה 1', type: 'platoon', parentId: coyAlpha.id },
-    });
-
-    const plt2 = await prisma.unit.upsert({
-        where: { id: 'plt-2' },
-        update: {},
-        create: { id: 'plt-2', name: 'מחלקה 2', type: 'platoon', parentId: coyAlpha.id },
+        create: { id: 'coy-mafgad', name: 'מפגד', type: 'company', parentId: bn7490.id },
     });
 
     console.log('  ✅ Units created');
 
     // ── Users ────────────────────────────────────────────────
 
-    // Senior Commander
-    const sc001 = await prisma.user.upsert({
-        where: { serviceNumber: 'SC-001' },
+    // 1. אסף שוחט (C-001) - רואה גדוד 7490 ומטה
+    const asafC = await prisma.user.upsert({
+        where: { serviceNumber: '8494326' },
         update: {},
         create: {
-            serviceNumber: 'SC-001',
+            serviceNumber: '8494326',
             passwordHash: commonPasswordHash,
-            firstName: 'ארי',
-            lastName: 'בן-דוד',
-            role: 'senior_commander',
-            rankCode: 'אל"מ',
-            rankLabel: 'אלוף משנה',
-            rankLevel: 8,
-            unitId: cmdNorth.id,
+            firstName: 'אסף',
+            lastName: 'שוחט',
+            role: 'commander',
+            rankCode: 'רס"ל',
+            rankLabel: 'רב סמל',
+            rankLevel: 4,
+            unitId: bn7490.id, // Attached to Battalion to see it and below
             currentStatus: 'in_base',
         },
     });
 
-    // Commander
-    const c001 = await prisma.user.upsert({
-        where: { serviceNumber: 'C-001' },
+    // 2. ישראל קייסי (C-001) - רואה מפלוגת לוגיסטיקה
+    const israelC = await prisma.user.upsert({
+        where: { serviceNumber: '7523495' },
         update: {},
         create: {
-            serviceNumber: 'C-001',
+            serviceNumber: '7523495',
             passwordHash: commonPasswordHash,
-            firstName: 'נועם',
-            lastName: 'כהן',
+            firstName: 'ישראל',
+            lastName: 'קייסי',
             role: 'commander',
             rankCode: 'סרן',
             rankLabel: 'סרן',
             rankLevel: 6,
-            unitId: coyAlpha.id,
+            unitId: coyLog.id,
             currentStatus: 'in_base',
         },
     });
 
-    // Soldiers in platoon 1
+    // 3. אסף לבנון (S-001)
     await prisma.user.upsert({
-        where: { serviceNumber: 'S-001' },
+        where: { serviceNumber: '5127011' },
         update: {},
         create: {
-            serviceNumber: 'S-001',
+            serviceNumber: '5127011',
             passwordHash: commonPasswordHash,
-            firstName: 'יונתן',
-            lastName: 'לוי',
+            firstName: 'אסף',
+            lastName: 'לבנון',
             role: 'soldier',
-            rankCode: 'רב"ט',
-            rankLabel: 'רב טוראי',
-            rankLevel: 3,
-            unitId: plt1.id,
+            rankCode: 'רס"ר',
+            rankLabel: 'רב סמל ראשון',
+            rankLevel: 5,
+            unitId: coyLog.id,
             currentStatus: 'in_base',
             lastKnownLat: 32.0853,
             lastKnownLng: 34.7818,
@@ -138,19 +120,20 @@ async function main() {
         },
     });
 
+    // 4. אליהו דני (S-001 implied)
     await prisma.user.upsert({
-        where: { serviceNumber: 'S-102' },
+        where: { serviceNumber: '4605914' },
         update: {},
         create: {
-            serviceNumber: 'S-102',
+            serviceNumber: '4605914',
             passwordHash: commonPasswordHash,
-            firstName: 'דנה',
-            lastName: 'כץ',
+            firstName: 'אליהו',
+            lastName: 'דני',
             role: 'soldier',
-            rankCode: 'רב"ט',
-            rankLabel: 'רב טוראי',
-            rankLevel: 3,
-            unitId: plt1.id,
+            rankCode: 'רס"ב',
+            rankLabel: 'רב סמל בכיר',
+            rankLevel: 7,
+            unitId: coyLog.id,
             currentStatus: 'out_of_base',
             lastKnownLat: 32.0900,
             lastKnownLng: 34.7900,
@@ -158,61 +141,75 @@ async function main() {
         },
     });
 
+    // 5. מאיר דידי (S-001)
     await prisma.user.upsert({
-        where: { serviceNumber: 'S-103' },
+        where: { serviceNumber: '8224770' },
         update: {},
         create: {
-            serviceNumber: 'S-103',
+            serviceNumber: '8224770',
             passwordHash: commonPasswordHash,
-            firstName: 'אייל',
-            lastName: 'רוזן',
+            firstName: 'מאיר',
+            lastName: 'דידי',
             role: 'soldier',
-            rankCode: 'טור',
-            rankLabel: 'טוראי',
-            rankLevel: 1,
-            unitId: plt1.id,
-            currentStatus: 'in_base',
-            lastKnownLat: 32.0855,
-            lastKnownLng: 34.7820,
-            lastLocationUpdate: new Date(Date.now() - 60_000),
-        },
-    });
-
-    // Soldiers in platoon 2
-    await prisma.user.upsert({
-        where: { serviceNumber: 'S-104' },
-        update: {},
-        create: {
-            serviceNumber: 'S-104',
-            passwordHash: commonPasswordHash,
-            firstName: 'מאיה',
-            lastName: 'לוי',
-            role: 'soldier',
-            rankCode: 'סמל',
-            rankLabel: 'סמל',
+            rankCode: 'רס"ל',
+            rankLabel: 'רב סמל',
             rankLevel: 4,
-            unitId: plt2.id,
+            unitId: coyLog.id,
             currentStatus: 'in_base',
-            lastKnownLat: 32.0860,
-            lastKnownLng: 34.7815,
-            lastLocationUpdate: new Date(Date.now() - 45_000),
         },
     });
 
+    // 6. יאיר עזרה ברקוביץ' (S-001)
     await prisma.user.upsert({
-        where: { serviceNumber: 'S-105' },
+        where: { serviceNumber: '7347745' },
         update: {},
         create: {
-            serviceNumber: 'S-105',
+            serviceNumber: '7347745',
             passwordHash: commonPasswordHash,
-            firstName: 'אורי',
-            lastName: 'שטיין',
+            firstName: 'יאיר עזרה',
+            lastName: 'ברקוביץ\'',
             role: 'soldier',
-            rankCode: 'טור',
-            rankLabel: 'טוראי ראשון',
-            rankLevel: 2,
-            unitId: plt2.id,
+            rankCode: 'רס"ל',
+            rankLabel: 'רב סמל',
+            rankLevel: 4,
+            unitId: coyLog.id,
             currentStatus: 'unknown',
+        },
+    });
+
+    // 7. שאולי שאולוב (C-001) - רואה גדוד 7490 ומטה
+    const shauliC = await prisma.user.upsert({
+        where: { serviceNumber: '7652679' },
+        update: {},
+        create: {
+            serviceNumber: '7652679',
+            passwordHash: commonPasswordHash,
+            firstName: 'שאולי',
+            lastName: 'שאולוב',
+            role: 'commander',
+            rankCode: 'סרן',
+            rankLabel: 'סרן',
+            rankLevel: 6,
+            unitId: bn7490.id,
+            currentStatus: 'in_base',
+        },
+    });
+
+    // 8. אסף שוחט (master / SC-001) - רואה גדוד 7490 ומטה
+    const masterSc = await prisma.user.upsert({
+        where: { serviceNumber: 'master' },
+        update: {},
+        create: {
+            serviceNumber: 'master',
+            passwordHash: commonPasswordHash,
+            firstName: 'אסף',
+            lastName: 'שוחט',
+            role: 'senior_commander',
+            rankCode: 'רס"ל',
+            rankLabel: 'רב סמל',
+            rankLevel: 4,
+            unitId: bn7490.id,
+            currentStatus: 'in_base',
         },
     });
 
@@ -220,8 +217,11 @@ async function main() {
 
     // ── Link commanders to units ─────────────────────────────
 
-    await prisma.unit.update({ where: { id: cmdNorth.id }, data: { commanderId: sc001.id } });
-    await prisma.unit.update({ where: { id: coyAlpha.id }, data: { commanderId: c001.id } });
+    // Master is the senior commander of the battalion
+    await prisma.unit.update({ where: { id: bn7490.id }, data: { commanderId: masterSc.id } });
+
+    // Israel is the commander of the logistics company
+    await prisma.unit.update({ where: { id: coyLog.id }, data: { commanderId: israelC.id } });
 
     console.log('  ✅ Commanders linked');
 
@@ -232,14 +232,14 @@ async function main() {
         update: {},
         create: {
             id: 'zone-1',
-            name: 'מחנה אלפא — היקף ראשי',
+            name: 'גדוד 7490 — מחנה ראשי',
             shapeType: 'circle',
             centerLat: 32.08,
             centerLng: 34.78,
             radiusMeters: 500,
             isActive: true,
-            unitId: coyAlpha.id,
-            createdBy: sc001.id,
+            unitId: bn7490.id,
+            createdBy: masterSc.id,
         },
     });
 
@@ -248,30 +248,14 @@ async function main() {
         update: {},
         create: {
             id: 'zone-2',
-            name: 'שטח אימונים בראבו',
+            name: 'מתחם לוגיסטיקה',
             shapeType: 'circle',
             centerLat: 32.10,
             centerLng: 34.80,
             radiusMeters: 300,
             isActive: true,
-            unitId: coyAlpha.id,
-            createdBy: sc001.id,
-        },
-    });
-
-    await prisma.geofenceZone.upsert({
-        where: { id: 'zone-3' },
-        update: {},
-        create: {
-            id: 'zone-3',
-            name: 'מחסן אספקה צ\'ארלי',
-            shapeType: 'circle',
-            centerLat: 32.07,
-            centerLng: 34.77,
-            radiusMeters: 150,
-            isActive: false,
-            unitId: coyAlpha.id,
-            createdBy: sc001.id,
+            unitId: coyLog.id,
+            createdBy: israelC.id,
         },
     });
 
@@ -279,10 +263,15 @@ async function main() {
     console.log('');
     console.log('🎉 Seed complete!');
     console.log('\n');
-    console.log('Default credentials:');
-    console.log('  SC-001 / Lockpoint2026! (מפקד בכיר)');
-    console.log('  C-001  / Lockpoint2026! (מפקד)');
-    console.log('  S-001  / Lockpoint2026! (חייל)');
+    console.log('Development Test Credentials (Password for all: Lockpoint2026!):');
+    console.log('  master  (SC-001)  — אסף שוחט (רואה הכל)');
+    console.log('  8494326 (C-001)   — אסף שוחט (מפקד גדוד)');
+    console.log('  7652679 (C-001)   — שאולי שאולוב (מפקד גדוד)');
+    console.log('  7523495 (C-001)   — ישראל קייסי (מפקד לוגיסטיקה)');
+    console.log('  5127011 (S-001)   — אסף לבנון (חייל לוגיסטיקה)');
+    console.log('  4605914 (S-001)   — אליהו דני (חייל לוגיסטיקה)');
+    console.log('  8224770 (S-001)   — מאיר דידי (חייל לוגיסטיקה)');
+    console.log('  7347745 (S-001)   — יאיר עזרה ברקוביץ\' (חייל לוגיסטיקה)');
 }
 
 main()
