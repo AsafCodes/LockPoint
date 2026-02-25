@@ -12,17 +12,10 @@ const SALT_ROUNDS = 12;
 async function main() {
     console.log('🌱 Seeding LockPoint database...');
 
-    // ── Clean slate: delete old data in FK-safe order ─────────
-    // This prevents duplicate trees when re-seeding a DB that
-    // already contains auto-generated CUID-based units.
-    console.log('  🧹 Cleaning old data...');
-    await prisma.notification.deleteMany();
-    await prisma.geofenceEvent.deleteMany();
-    await prisma.geofenceZone.deleteMany();
-    await prisma.auditLog.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.unit.deleteMany();
-    console.log('  ✅ Old data cleared');
+    // ── Safe Seed Mode ───────────────────────────────────────
+    // We are in Alpha production. We preserve existing data.
+    // upsert will create these if they don't exist, but won't delete user-created data.
+    console.log('  🛡️ Preserving existing data (Alpha Production Mode)');
 
     // Hash the default password for all demo users
     const commonPasswordHash = await bcrypt.hash('LP1234', SALT_ROUNDS);
