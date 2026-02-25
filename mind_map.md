@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-25 (v0.5.0)
+> Updated: 2026-02-25 (v0.5.4)
 
 ---
 
@@ -139,6 +139,22 @@
 - v0.4.0 **Cron Alert Checker** — now spatially verifies soldier positions (Rule D)
 - v0.2.0 **Client Geofence Engine** — math functions shared with server, no duplication
 - v0.1.0 **Soldier Status** — auto-corrected when position disagrees with stale status
+
+---
+
+## v0.5.4-Alpha — Geofence Sync, UI Unfreeze & UX Polish ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Initial GPS Sync (Discrepancy Fix)** | ✅ Done | `src/app/api/events/sync/route.ts`, `useGeofenceMonitor.ts` |
+| **Status Real-Time Cache Invalidation**| ✅ Done | `useGeofenceMonitor.ts`, `SoldierHome.tsx` |
+| **Live UI Timestamp (Ping Heartbeat)** | ✅ Done | `SoldierHome.tsx`, `useGeofenceMonitor.ts` |
+| **Noto Sans Replacement (Heebo)** | ✅ Done | `src/app/layout.tsx`, `src/styles/globals.css` |
+| **Version Bump to v0.5.4** | ✅ Done | `package.json`, Git Push |
+
+**Impact on existing features:**
+- v0.2.0 **Soldier Home** — Visually ticks forward with the live GPS engine and syncs its state in real time.
+- v0.1.0 **UI Design** — Browser console warnings eliminated and font rendering reliability improved.
 
 ---
 
