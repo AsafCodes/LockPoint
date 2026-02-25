@@ -42,10 +42,10 @@ export function SoldierHome() {
         );
     }
 
-    const currentStatus = user.currentStatus || 'unknown';
-    const lastUpdate = user.lastLocationUpdate || new Date().toISOString();
-    const lat = geofence.lastPosition?.lat || user.lastKnownLat || 32.0853;
-    const lng = geofence.lastPosition?.lng || user.lastKnownLng || 34.7818;
+    const currentStatus = me?.currentStatus || user.currentStatus || 'unknown';
+    const lastUpdate = geofence.lastPingTime || me?.lastLocationUpdate || user.lastLocationUpdate || new Date().toISOString();
+    const lat = geofence.lastPosition?.lat || me?.lastKnownLat || user.lastKnownLat || 32.0853;
+    const lng = geofence.lastPosition?.lng || me?.lastKnownLng || user.lastKnownLng || 34.7818;
 
     return (
         <>

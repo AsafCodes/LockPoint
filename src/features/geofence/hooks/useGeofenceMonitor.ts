@@ -25,6 +25,8 @@ export interface GeofenceMonitorState {
     gpsStatus: GpsStatus;
     /** Last known position */
     lastPosition: LatLng | null;
+    /** The ISO timestamp of the last raw GPS ping received */
+    lastPingTime: string | null;
     /** GPS accuracy in meters */
     accuracy: number | null;
     /** Name of the current zone the soldier is inside (null = outside all zones) */
@@ -86,6 +88,7 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
     const [isMonitoring, setIsMonitoring] = useState(false);
     const [gpsStatus, setGpsStatus] = useState<GpsStatus>('idle');
     const [lastPosition, setLastPosition] = useState<LatLng | null>(null);
+    const [lastPingTime, setLastPingTime] = useState<string | null>(null);
     const [accuracy, setAccuracy] = useState<number | null>(null);
     const [currentZoneName, setCurrentZoneName] = useState<string | null>(null);
     const [isInsideZone, setIsInsideZone] = useState(false);
@@ -183,6 +186,7 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
 
         unsubGpsRef.current = gps.onLocation((location, acc) => {
             setLastPosition(location);
+            setLastPingTime(new Date().toISOString());
             setAccuracy(Math.round(acc));
 
             // Feed into transition manager
@@ -263,6 +267,7 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
         isMonitoring,
         gpsStatus,
         lastPosition,
+        lastPingTime,
         accuracy,
         currentZoneName,
         isInsideZone,
