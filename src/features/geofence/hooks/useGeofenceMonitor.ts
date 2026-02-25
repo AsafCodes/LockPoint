@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CapacitorGPSBridge } from '../tracker/capacitor-bridge';
 import { TransitionManager } from '../engine/transition';
 import { isInsideGeofence } from '../engine/calculator';
@@ -81,6 +82,7 @@ function dbZoneToEngineZone(z: DbZone): GeofenceZone {
 // ── Hook Implementation ─────────────────────────────────────
 
 export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorState {
+    const queryClient = useQueryClient();
     const [isMonitoring, setIsMonitoring] = useState(false);
     const [gpsStatus, setGpsStatus] = useState<GpsStatus>('idle');
     const [lastPosition, setLastPosition] = useState<LatLng | null>(null);
@@ -126,10 +128,11 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
                 accuracy: acc,
             });
             console.log(`[Geofence] Reported ${transition} for zone ${zoneId}`);
+            queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
         } catch (err) {
             console.error('[Geofence] Failed to report transition:', err);
         }
-    }, []);
+    }, [queryClient]);
 
     // ── Start monitoring ────────────────────────────────────
 
@@ -208,7 +211,9 @@ export function useGeofenceMonitor(soldierId: string | null): GeofenceMonitorSta
                     lng: location.lng,
                     accuracy: acc,
                     isInsideZone: isInside
-                }).catch(err => console.error('[Geofence] Initial sync failed:', err));
+                })
+                    .then(() => queryClient.invalidateQueries({ queryKey: ['auth', 'me'] }))
+                    .catch(err => console.error('[Geofence] Initial sync failed:', err));
             }
         });
 
