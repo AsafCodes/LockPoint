@@ -316,6 +316,24 @@ async function main() {
         },
     });
 
+    // 15. ניר (S-001) - תאגד
+    await prisma.user.upsert({
+        where: { serviceNumber: '7307211' },
+        update: {},
+        create: {
+            serviceNumber: '7307211',
+            passwordHash: commonPasswordHash,
+            firstName: 'ניר',
+            lastName: '',
+            role: 'soldier',
+            rankCode: 'טוראי',
+            rankLabel: 'טוראי',
+            rankLevel: 1,
+            unitId: coyTaagad.id,
+            currentStatus: 'unknown',
+        },
+    });
+
     // 8. אסף שוחט (master / SC-001) - רואה גדוד 7490 ומטה
     const masterSc = await prisma.user.upsert({
         where: { serviceNumber: 'master' },
