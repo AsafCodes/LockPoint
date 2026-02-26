@@ -188,6 +188,134 @@ async function main() {
         },
     });
 
+    // --- NEW USERS APPROVED ---
+
+    // 8. רודנקו (S-001) - תאגד
+    await prisma.user.upsert({
+        where: { serviceNumber: '8400883' },
+        update: {},
+        create: {
+            serviceNumber: '8400883',
+            passwordHash: commonPasswordHash,
+            firstName: 'רודנקו', // Used as first name as per user preference implied
+            lastName: '',
+            role: 'soldier',
+            rankCode: 'טוראי', // Default rank
+            rankLabel: 'טוראי',
+            rankLevel: 1,
+            unitId: coyTaagad.id,
+            currentStatus: 'unknown',
+        },
+    });
+
+    // 9. יוסי (C-001) - תאגד ומטה
+    const yossiC = await prisma.user.upsert({
+        where: { serviceNumber: '5873933' },
+        update: {},
+        create: {
+            serviceNumber: '5873933',
+            passwordHash: commonPasswordHash,
+            firstName: 'יוסי',
+            lastName: '',
+            role: 'commander',
+            rankCode: 'סג"ם', // Default rank
+            rankLabel: 'סגן משנה',
+            rankLevel: 6,
+            unitId: coyTaagad.id,
+            currentStatus: 'unknown',
+        },
+    });
+
+    // 10. צליל בן שמחון (S-001) - לוגיסטיקה
+    await prisma.user.upsert({
+        where: { serviceNumber: '8757309' },
+        update: {},
+        create: {
+            serviceNumber: '8757309',
+            passwordHash: commonPasswordHash,
+            firstName: 'צליל',
+            lastName: 'בן שמחון',
+            role: 'soldier',
+            rankCode: 'רס"ר',
+            rankLabel: 'רב סמל ראשון',
+            rankLevel: 5,
+            unitId: coyLog.id,
+            currentStatus: 'unknown',
+        },
+    });
+
+    // 11. משה אמבאו (S-001) - לוגיסטיקה
+    await prisma.user.upsert({
+        where: { serviceNumber: '8127660' },
+        update: {},
+        create: {
+            serviceNumber: '8127660',
+            passwordHash: commonPasswordHash,
+            firstName: 'משה',
+            lastName: 'אמבאו',
+            role: 'soldier',
+            rankCode: 'רס"ל',
+            rankLabel: 'רב סמל',
+            rankLevel: 4,
+            unitId: coyLog.id,
+            currentStatus: 'unknown',
+        },
+    });
+
+    // 12. טליה איצקוביץ (S-001) - לוגיסטיקה
+    await prisma.user.upsert({
+        where: { serviceNumber: '9000612' },
+        update: {},
+        create: {
+            serviceNumber: '9000612',
+            passwordHash: commonPasswordHash,
+            firstName: 'טליה',
+            lastName: 'איצקוביץ',
+            role: 'soldier',
+            rankCode: 'רס"ל',
+            rankLabel: 'רב סמל',
+            rankLevel: 4,
+            unitId: coyLog.id,
+            currentStatus: 'unknown',
+        },
+    });
+
+    // 13. פיראס קבלאן (S-001) - לוגיסטיקה
+    await prisma.user.upsert({
+        where: { serviceNumber: '6033050' },
+        update: {},
+        create: {
+            serviceNumber: '6033050',
+            passwordHash: commonPasswordHash,
+            firstName: 'פיראס',
+            lastName: 'קבלאן',
+            role: 'soldier',
+            rankCode: 'רס"ר',
+            rankLabel: 'רב סמל ראשון',
+            rankLevel: 5,
+            unitId: coyLog.id,
+            currentStatus: 'unknown',
+        },
+    });
+
+    // 14. טגניה גוצ'ל (S-001) - לוגיסטיקה
+    await prisma.user.upsert({
+        where: { serviceNumber: '7213949' },
+        update: {},
+        create: {
+            serviceNumber: '7213949',
+            passwordHash: commonPasswordHash,
+            firstName: 'טגניה',
+            lastName: "גוצ'ל",
+            role: 'soldier',
+            rankCode: 'רס"ב',
+            rankLabel: 'רב סמל בכיר',
+            rankLevel: 7,
+            unitId: coyLog.id,
+            currentStatus: 'unknown',
+        },
+    });
+
     // 8. אסף שוחט (master / SC-001) - רואה גדוד 7490 ומטה
     const masterSc = await prisma.user.upsert({
         where: { serviceNumber: 'master' },
