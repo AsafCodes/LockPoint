@@ -44,6 +44,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Display Scaling ────────────────────────────────────────── */
+
+html.ui-large {
+  font-size: 115%;
+}
+
 /* ── Safe Area (iOS notch / Android gesture bar) ───────────── */
 
 .safe-top {

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { DisplayProvider } from '@/providers/DisplayProvider';
 
 export const metadata: Metadata = {
   title: 'לוקפוינט — מערכת נוכחות צבאית',
@@ -37,7 +38,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-midnight text-text-primary antialiased">
         <QueryProvider>
           <AuthProvider>
-            {children}
+            <DisplayProvider>
+              {children}
+            </DisplayProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

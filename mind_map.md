@@ -1,7 +1,7 @@
 # LockPoint — Feature Mind Map
 
 > Living document tracking all features across versions.
-> Updated: 2026-02-25 (v0.5.4)
+> Updated: 2026-02-27 (v0.5.5)
 
 ---
 
@@ -155,6 +155,21 @@
 **Impact on existing features:**
 - v0.2.0 **Soldier Home** — Visually ticks forward with the live GPS engine and syncs its state in real time.
 - v0.1.0 **UI Design** — Browser console warnings eliminated and font rendering reliability improved.
+
+---
+
+## v0.5.5-Alpha — Display Scaling (Comfort View) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Global Scale Modifier** | ✅ Done | `src/styles/globals.css` |
+| **Display State Context** | ✅ Done | `src/providers/DisplayProvider.tsx` |
+| **Provider Integration** | ✅ Done | `src/app/layout.tsx` |
+| **Display Toggle Switch** | ✅ Done | `src/shared/components/Sidebar.tsx` |
+| **Version Bump to v0.5.5** | ✅ Done | `package.json` |
+
+**Impact on existing features:**
+- v0.1.0 **UI Design** — Mobile and desktop readability improved for all font-sizes, margins, paddings globally due to the `.ui-large` class. Users can toggle this preference.
 
 ---
 

@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useAuth } from '@/providers/AuthProvider';
+import { useDisplay } from '@/providers/DisplayProvider';
 import { cn } from '@/shared/utils/cn';
 import { ROUTES } from '@/lib/constants';
 import { t } from '@/lib/i18n';
@@ -30,6 +31,7 @@ const NAV_ITEMS = {
 
 export function Sidebar({ onClose }: SidebarProps) {
     const { user, logout } = useAuth();
+    const { isLargeUI, toggleLargeUI } = useDisplay();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -111,11 +113,34 @@ export function Sidebar({ onClose }: SidebarProps) {
                 })}
             </nav>
 
-            {/* Logout */}
-            <div className="p-3 border-t border-border-subtle">
+            {/* Display & Logout */}
+            <div className="p-3 border-t border-border-subtle flex flex-col gap-2">
+                <button
+                    onClick={toggleLargeUI}
+                    className={cn(
+                        "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all touch-target border",
+                        isLargeUI
+                            ? "bg-info-blue/10 text-info-blue border-info-blue/30"
+                            : "text-text-secondary hover:bg-slate-dark hover:text-text-primary border-transparent"
+                    )}
+                >
+                    <div className="flex items-center gap-3">
+                        <span className="text-base">A±</span>
+                        <span>תצוגה מוגדלת</span>
+                    </div>
+                    <div className={cn(
+                        "w-8 h-4 rounded-full flex items-center p-0.5 transition-colors duration-200 relative",
+                        isLargeUI ? "bg-info-blue" : "bg-slate-light"
+                    )}>
+                        <div className={cn(
+                            "w-3 h-3 bg-white rounded-full shadow-sm absolute transition-all duration-200",
+                            isLargeUI ? "left-0.5" : "right-0.5"
+                        )} />
+                    </div>
+                </button>
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-danger-red/80 hover:bg-danger-red/10 hover:text-danger-red transition-all touch-target"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-danger-red/80 hover:bg-danger-red/10 hover:text-danger-red transition-all touch-target border border-transparent"
                 >
                     <span>⏻</span>
                     <span>{t.auth.signOut}</span>
