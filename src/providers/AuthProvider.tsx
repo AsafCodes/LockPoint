@@ -9,6 +9,9 @@ import type { User, UserRole } from '@/features/hierarchy';
 import type { LoginCredentials } from '@/lib/api/types';
 import { apiClient } from '@/lib/api/client';
 
+// Fully-qualified base URL for Capacitor; falls back to relative for web/Docker
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 interface AuthState {
     user: User | null;
     isAuthenticated: boolean;
@@ -41,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!refreshTokenRef.current) return;
 
         try {
-            const res = await fetch('/api/auth/refresh', {
+            const res = await fetch(`${API_BASE}/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ refreshToken: refreshTokenRef.current }),
@@ -79,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = useCallback(async (credentials: LoginCredentials) => {
         setState((s) => ({ ...s, isLoading: true }));
 
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials),

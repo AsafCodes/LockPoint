@@ -1,8 +1,15 @@
 // ─────────────────────────────────────────────────────────────
-// LockPoint — HTTP Client (Same-origin API)
+// LockPoint — HTTP Client
+// Supports both same-origin (/api) and remote (https://...) base URLs
+// to work in both the web (Docker) and Capacitor (native) builds.
 // ─────────────────────────────────────────────────────────────
 
 import type { ApiResponse, ApiError } from './types';
+
+// In Capacitor static builds, NEXT_PUBLIC_API_URL must be set to the
+// fully-qualified server URL (e.g. https://lockpoint.onrender.com/api).
+// In Docker / dev builds, it falls back to relative /api.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 class ApiClient {
     private baseUrl: string;
@@ -45,12 +52,20 @@ class ApiClient {
         return json.data;
     }
 
-    async get<T>(path: string, params?: Record<string, string>): Promise<T> {
-        const url = new URL(`${this.baseUrl}${path}`, window.location.origin);
+    /** Build a full URL, handling both absolute and relative bases */
+    private buildUrl(path: string, params?: Record<string, string>): string {
+        const fullPath = `${this.baseUrl}${path}`;
+        const url = fullPath.startsWith('http')
+            ? new URL(fullPath)
+            : new URL(fullPath, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
         if (params) {
             Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
         }
-        const res = await fetch(url.toString(), {
+        return url.toString();
+    }
+
+    async get<T>(path: string, params?: Record<string, string>): Promise<T> {
+        const res = await fetch(this.buildUrl(path, params), {
             method: 'GET',
             headers: this.getHeaders(),
         });
@@ -93,6 +108,6 @@ class ApiClient {
     }
 }
 
-/** Singleton API client — now points to same-origin API routes */
-export const apiClient = new ApiClient('/api');
+/** Singleton API client — uses NEXT_PUBLIC_API_URL for Capacitor, /api for web */
+export const apiClient = new ApiClient(API_BASE_URL);
 export default apiClient;

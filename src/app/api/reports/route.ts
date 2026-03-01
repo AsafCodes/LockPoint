@@ -26,6 +26,21 @@ export const POST = withAuth(async (req: NextRequest, user: TokenPayload) => {
         return successResponse({ error: parsed.error.flatten() }, 400);
     }
 
+    // ── BOLA Remediation: Ownership Check ────────────────────────
+    // Verify the event exists and belongs to the requesting soldier
+    const event = await prisma.geofenceEvent.findUnique({
+        where: { id: parsed.data.eventId },
+        select: { soldierId: true }
+    });
+
+    if (!event) {
+        return successResponse({ error: 'האירוע לא נמצא' }, 404);
+    }
+
+    if (event.soldierId !== user.userId) {
+        return successResponse({ error: 'אין הרשאה: לא ניתן לדווח על אירוע של חייל אחר' }, 403);
+    }
+
     const report = await prisma.exitReport.create({
         data: {
             soldierId: user.userId,

@@ -212,6 +212,17 @@
 
 ---
 
+## v0.5.9-Alpha — BOLA-002 Security Patch (Event Spoofing) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Event Ownership Validation** | ✅ Done | `src/app/api/reports/route.ts` |
+
+**Impact on existing features:**
+- v0.1.0 **Reports API** — Soldiers can no longer submit exit reports against another soldier's geofence event. The server aggressively checks `event.soldierId === user.userId` before taking action.
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |
