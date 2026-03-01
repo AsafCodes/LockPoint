@@ -1,0 +1,277 @@
+{
+    "info": {
+        "_postman_id": "b3fbd719-7bc3-48e2-b1db-1a6e5b4ebd89",
+        "name": "LockPoint API Security Audit (OWASP BOLA)",
+        "description": "Collection designed to test the existing API and reproduce the 5 BOLA vulnerabilities identified in Phase 3.\n\n### How to use:\n1. Open the 'Setup & Auth' folder.\n2. Run the three login requests.\n3. The test scripts will automatically capture the access tokens and save them as collection variables (`soldierToken`, `commanderToken`, `seniorToken`).\n4. Run the requests inside the BOLA folders to test the vulnerabilities.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "0. Setup & Auth",
+            "item": [
+                {
+                    "name": "Login (Soldier)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if(jsonData.success && jsonData.data) {",
+                                    "    pm.collectionVariables.set(\"soldierToken\", jsonData.data.accessToken);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"serviceNumber\": \"MOCK_SOLDIER_ID\",\n  \"password\": \"your_password_here\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login (Commander)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if(jsonData.success && jsonData.data) {",
+                                    "    pm.collectionVariables.set(\"commanderToken\", jsonData.data.accessToken);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"serviceNumber\": \"MOCK_COMMANDER_ID\",\n  \"password\": \"your_password_here\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login (Senior Commander)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if(jsonData.success && jsonData.data) {",
+                                    "    pm.collectionVariables.set(\"seniorToken\", jsonData.data.accessToken);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"serviceNumber\": \"MOCK_SENIOR_ID\",\n  \"password\": \"your_password_here\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BOLA-001: Zone ID Manipulation (🔴 HIGH)",
+            "description": "Tests if a Senior Commander can update/delete a zone from ANOTHER unit by modifying the `id` in the URL.",
+            "item": [
+                {
+                    "name": "Delete Zone Outside Scope",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{seniorToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/zones/REPLACE_WITH_OTHER_UNIT_ZONE_ID",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "zones",
+                                "REPLACE_WITH_OTHER_UNIT_ZONE_ID"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BOLA-002: Event ID Spoofing in Reports (🔴 HIGH)",
+            "description": "Tests if a Soldier can submit a report referencing an event ID belonging to a different soldier.",
+            "item": [
+                {
+                    "name": "Submit Report on Behalf of Other Soldier",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{soldierToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"eventId\": \"REPLACE_WITH_EVENT_ID_OF_ANOTHER_SOLDIER\",\n  \"destination\": \"Spoofed Destination\",\n  \"reason\": \"personal_leave\",\n  \"freeText\": \"I am creating a report for an event that is not mine!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/reports",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BOLA-003: Unauthenticated Cron Trigger (🔴 HIGH)",
+            "description": "Tests the complete lack of API authentication on the cron interval handler.",
+            "item": [
+                {
+                    "name": "Trigger Cron/Alerts (No Auth)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/cron/check-alerts",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "cron",
+                                "check-alerts"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BOLA-004: Global Event View (🟡 MEDIUM)",
+            "description": "Tests if a regular Commander sees geofence events of soldiers outside their unit structure.",
+            "item": [
+                {
+                    "name": "Get Events (Commander View Leak)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{commanderToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/events",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "events"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "soldierToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "commanderToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "seniorToken",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}

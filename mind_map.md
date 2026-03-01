@@ -173,6 +173,45 @@
 
 ---
 
+## v0.5.6-Alpha — Capacitor Build Compatibility ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Dual Build Mode Configuration** | ✅ Done | `next.config.ts` |
+| **Dynamic Remote API Client** | ✅ Done | `src/lib/api/client.ts` |
+| **AuthProvider Remote Fetch** | ✅ Done | `src/providers/AuthProvider.tsx` |
+
+**Impact on existing features:**
+- v0.1.0 **API Connectivity** — The frontend can now be bundled statically inside an APK while all `fetch()` calls correctly route external traffic to the Render server (`NEXT_PUBLIC_API_URL`). When run via Web/Docker, relative paths still work seamlessly.
+
+---
+
+## v0.5.7-Alpha — Global API CORS Security (Layer 1) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Global Edge Middleware** | ✅ Done | `src/middleware.ts` |
+| **CORS Utility Helper** | ✅ Done | `src/lib/api/cors.ts` |
+
+**Impact on existing features:**
+- v0.1.0 **All API Routes** — Instead of modifying 13 individual route files, every `/api/*` endpoint is securely intercepted by Edge Middleware.
+- **Strict Whitelisting** — Only requests originating from `capacitor://localhost`, `ionic://localhost`, or configured web domains are allowed.
+- **Defense in Depth** — Established that CORS is merely Layer 1 edge-filtration; JWT Auth (Layer 2) remains deeply embedded within the routes.
+
+## v0.5.8-Alpha — BOLA-001 Security Patch (Zone Ownership) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Zone Existence Validation** | ✅ Done | `src/app/api/zones/[id]/route.ts` |
+| **Zone Scope Boundary Enforcement** | ✅ Done | `src/app/api/zones/[id]/route.ts` |
+| **Automated BOLA Testing Script** | ✅ Done | `scripts/test-bola-001.ts` |
+| **Postman Exploit Demo** | ✅ Done | `LockPoint_BOLA_Audit.postman_collection.json` |
+
+**Impact on existing features:**
+- v0.1.0 **Zones CRUD API** — Senior Commanders can no longer modify or delete zones that lie outside of their unit hierarchy. Implemented `verifyZoneScope` utility to protect ID references across PUT and DELETE operations.
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |
