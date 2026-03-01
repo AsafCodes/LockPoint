@@ -13,7 +13,7 @@
 // It also captures StatusSnapshots for the BI data layer.
 // ─────────────────────────────────────────────────────────────
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { successResponse } from '@/lib/auth/middleware';
 import { NOTIFICATIONS } from '@/lib/constants';
@@ -21,7 +21,16 @@ import { isInsideZone } from '@/lib/geo/geofence-calc';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+    // ── BOLA Remediation: CRON Authentication ────────────────
+    const authHeader = req.headers.get('authorization');
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json(
+            { success: false, error: 'Unauthorized CRON trigger' },
+            { status: 401 }
+        );
+    }
+
     const now = new Date();
     let ruleB_count = 0;
     let ruleC_count = 0;

@@ -223,6 +223,18 @@
 
 ---
 
+## v0.5.10-Alpha — BOLA-003 Security Patch (Cron Auth) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **CRON_SECRET Header Auth** | ✅ Done | `src/app/api/cron/check-alerts/route.ts` |
+| **API Environment Secrets** | ✅ Done | `.env` |
+
+**Impact on existing features:**
+- v0.4.0 **Cron Alert Checker** — The endpoint is no longer publicly exposed. Render.com or any external cron service must now supply `Authorization: Bearer <CRON_SECRET>` to trigger the background health checks.
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |
