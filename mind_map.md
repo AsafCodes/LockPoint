@@ -235,6 +235,17 @@
 
 ---
 
+## v0.5.11-Alpha — BOLA-004 Security Patch (Scope Fencing) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Dynamic Hierarchy SQL Filtering** | ✅ Done | `src/app/api/events/route.ts` |
+
+**Impact on existing features:**
+- v0.1.0 **Events API** — Regular Commanders fetching `/api/events` will no longer see global events across the entire military tree. The server automatically calculates their exact recursive unit map and restricts the database query to their soldiers only. Senior Commanders remain globally scoped.
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |

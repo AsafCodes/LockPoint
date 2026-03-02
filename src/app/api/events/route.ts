@@ -13,8 +13,28 @@ import type { TokenPayload } from '@/lib/auth/jwt';
 
 // ── GET: List recent events ──────────────────────────────────
 
-export const GET = withRole(['commander', 'senior_commander'], async (_req: NextRequest, _user: TokenPayload) => {
+export const GET = withRole(['commander', 'senior_commander'], async (_req: NextRequest, user: TokenPayload) => {
+    let whereClause = {};
+
+    // ── BOLA Remediation: Unit Scope Check ────────────────────────
+    // restrict regular commanders to their own unit hierarchy
+    if (user.role === 'commander') {
+        const currentUser = await prisma.user.findUnique({ where: { id: user.userId }, select: { unitId: true } });
+        if (!currentUser) return successResponse({ error: 'משתמש לא מצא' }, 404);
+
+        const unitIds = await getAllChildUnitIds(currentUser.unitId);
+        const soldiersInScope = await prisma.user.findMany({
+            where: { unitId: { in: unitIds } },
+            select: { id: true }
+        });
+
+        whereClause = {
+            soldierId: { in: soldiersInScope.map((s: { id: string }) => s.id) }
+        };
+    }
+
     const events = await prisma.geofenceEvent.findMany({
+        where: whereClause,
         include: {
             soldier: { select: { firstName: true, lastName: true, rankCode: true, serviceNumber: true } },
             zone: { select: { name: true } },
@@ -85,3 +105,17 @@ export const POST = withAuth(async (req: NextRequest, user: TokenPayload) => {
 
     return successResponse(event, 201);
 });
+
+// ── Shared Helper ────────────────────────────────────────────
+
+async function getAllChildUnitIds(unitId: string): Promise<string[]> {
+    const ids = [unitId];
+    const children = await prisma.unit.findMany({
+        where: { parentId: unitId },
+        select: { id: true },
+    });
+    for (const child of children) {
+        ids.push(...await getAllChildUnitIds(child.id));
+    }
+    return ids;
+}
