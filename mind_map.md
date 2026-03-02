@@ -246,6 +246,17 @@
 
 ---
 
+## v0.5.12-Alpha — BOLA-005 Security Patch (Stale CORS Cleanup) ✅
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **CORS Standardization** | ✅ Done | `src/app/api/notifications/route.ts` |
+
+**Impact on existing features:**
+- v0.2.0 **Notifications API** — Cleaned up legacy inline CORS wrappers that were creating security fragmentation. The API now exclusively relies on global Edge Middleware for CORS enforcement.
+
+---
+
 ## Backlog — Future Versions
 
 | Feature | Priority | Version |

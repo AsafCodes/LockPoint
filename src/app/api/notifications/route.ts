@@ -8,12 +8,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { withAuth, successResponse } from '@/lib/auth/middleware';
-import { withCors, handlePreflight } from '@/lib/api/cors';
 import type { TokenPayload } from '@/lib/auth/jwt';
-
-export async function OPTIONS(req: NextRequest) {
-    return handlePreflight(req);
-}
 
 // ── GET: List my notifications ───────────────────────────────
 
@@ -34,7 +29,7 @@ export const GET = withAuth(async (req: NextRequest, user: TokenPayload) => {
         where: { userId: user.userId, isRead: false },
     });
 
-    return withCors(successResponse({ notifications, unreadCount }), req);
+    return successResponse({ notifications, unreadCount });
 });
 
 // ── PATCH: Mark notifications as read ────────────────────────
@@ -49,7 +44,7 @@ export const PATCH = withAuth(async (req: NextRequest, user: TokenPayload) => {
     const parsed = markReadSchema.safeParse(body);
 
     if (!parsed.success) {
-        return withCors(successResponse({ error: parsed.error.flatten() }, 400), req);
+        return successResponse({ error: parsed.error.flatten() }, 400);
     }
 
     const { ids, markAllRead } = parsed.data;
@@ -66,5 +61,5 @@ export const PATCH = withAuth(async (req: NextRequest, user: TokenPayload) => {
         });
     }
 
-    return withCors(successResponse({ ok: true }), req);
+    return successResponse({ ok: true });
 });
