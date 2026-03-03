@@ -22,6 +22,7 @@ export interface CommanderDashboardResponse {
 
 export interface SeniorDashboardResponse {
     globalStats: DashboardStats;
+    commanderLocations: any[];
     units: OrgNode[];
     flatUnits: OrgNode[];
     events: any[];
@@ -51,6 +52,45 @@ export function useSeniorDashboard() {
         queryFn: () => apiClient.get<SeniorDashboardResponse>('/dashboard/senior'),
         refetchInterval: 30000,
     });
+}
+
+// ── RBAC Permission Hook ────────────────────────────────────
+
+interface MyPermission {
+    code: string;
+    label: string;
+    category: string;
+    scopeUnitId: string | null;
+    expiresAt: string | null;
+}
+
+interface MyPermissionsResponse {
+    permissions: MyPermission[];
+}
+
+/**
+ * Fetches the authenticated user's active permissions.
+ * Used to conditionally render UI elements (buttons, panels, tabs).
+ * The server is still the enforcer (403) — this is UX-only filtering.
+ */
+export function useMyPermissions() {
+    const query = useQuery({
+        queryKey: ['auth', 'permissions'],
+        queryFn: () => apiClient.get<MyPermissionsResponse>('/auth/permissions'),
+        staleTime: 5 * 60 * 1000, // 5 minutes — permissions change rarely
+    });
+
+    const permissionCodes = new Set(
+        (query.data?.permissions || []).map((p) => p.code)
+    );
+
+    return {
+        ...query,
+        /** Check if the user has a specific permission */
+        hasPermission: (code: string) => permissionCodes.has(code),
+        /** All permission codes as a Set for batch checks */
+        permissionCodes,
+    };
 }
 
 // ── Mutations ───────────────────────────────────────────────

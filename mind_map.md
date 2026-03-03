@@ -271,6 +271,11 @@
 | **Frontend — OPSEC-safe map pins** | ✅ Done | `src/features/map/components/TacticalMap.tsx` |
 | **Client-Side Native Web Crypto API** | ✅ Done | `src/lib/crypto/location-crypto.ts` |
 | **Attestation guard** | ✅ Done | `src/lib/auth/attestation-guard.ts` |
+| **Anti-Replay Grant Protection** | ✅ Done | `attestation-guard.ts`, `schema.prisma` (isActive + nonce + GrantProof) |
+| **V8 RAM Zeroization (Side-Channel)** | ✅ Done | `commander-visibility/route.ts` (ephemeral.setPrivateKey zero) |
+| **Commander Status Panel** | ✅ Done | `src/features/dashboard/components/CommanderStatusPanel.tsx` |
+| **Dashboard Integration (6.3-6.4)** | ✅ Done | `CommanderDashboard.tsx`, `GlobalOverview.tsx` |
+| **Frontend RBAC Permission Gating** | ✅ Done | `hooks.ts` (useMyPermissions), `api/auth/permissions/route.ts`, Dashboard + GlobalOverview UI gated |
 
 **New Prisma model:** `CommanderVisibilityGrant` — stores explicit visibility grants between parallel commanders with ECDH key exchange fields (`viewerPublicKey`, `ephemeralPubKey`, `encryptedViewKey`).
 

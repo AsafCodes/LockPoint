@@ -14,8 +14,9 @@ import { t } from '@/lib/i18n';
 import type { Soldier } from '@/features/hierarchy/types';
 import type { OrgNode } from '@/features/hierarchy/types';
 import type { GeofenceEvent } from '@/features/geofence/types';
-import { useCommanderDashboard } from '@/lib/api/hooks';
+import { useCommanderDashboard, useMyPermissions } from '@/lib/api/hooks';
 import { DynamicTacticalMap } from '@/features/map';
+import { CommanderStatusPanel } from './CommanderStatusPanel';
 
 // Demo data removed - using real API
 
@@ -23,6 +24,7 @@ export function CommanderDashboard() {
     const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
 
     const { data, isLoading } = useCommanderDashboard();
+    const { hasPermission } = useMyPermissions();
 
     if (isLoading || !data) {
         return <div className="animate-pulse flex space-x-4"><div className="flex-1 space-y-4 py-1"><div className="h-4 bg-slate-dark rounded w-3/4"></div><div className="space-y-2"><div className="h-4 bg-slate-dark rounded"></div><div className="h-4 bg-slate-dark rounded w-5/6"></div></div></div></div>;
@@ -68,23 +70,34 @@ export function CommanderDashboard() {
                 </TacticalCard>
             </div>
 
-            {/* Tactical Map */}
-            <TacticalCard>
-                <h3 className="text-sm font-semibold text-text-primary mb-3">מפה טקטית — מיקומי אנשי צוות</h3>
-                <DynamicTacticalMap
-                    soldiers={soldiers.map((s: any) => ({
-                        id: s.id,
-                        name: `${s.firstName} ${s.lastName}`,
-                        rank: s.rankCode || s.rank?.code || '',
-                        status: s.currentStatus || 'unknown',
-                        lat: s.lastKnownLat,
-                        lng: s.lastKnownLng,
-                        lastUpdate: s.lastLocationUpdate,
-                    }))}
-                    zones={zones || []}
-                    height="350px"
-                />
-            </TacticalCard>
+            {/* Commander's Own Status Panel — requires VIEW_ALL_LOCATIONS */}
+            {hasPermission('VIEW_ALL_LOCATIONS') && (
+                <TacticalCard className="border-indigo-500/20">
+                    <h3 className="text-sm font-semibold text-text-primary mb-3">המיקום שלי</h3>
+                    <CommanderStatusPanel />
+                </TacticalCard>
+            )}
+
+            {/* Tactical Map — requires VIEW_ALL_LOCATIONS */}
+            {hasPermission('VIEW_ALL_LOCATIONS') && (
+                <TacticalCard>
+                    <h3 className="text-sm font-semibold text-text-primary mb-3">מפה טקטית — מיקומי אנשי צוות</h3>
+                    <DynamicTacticalMap
+                        soldiers={soldiers.map((s: any) => ({
+                            id: s.id,
+                            name: `${s.firstName} ${s.lastName}`,
+                            rank: s.rankCode || s.rank?.code || '',
+                            status: s.currentStatus || 'unknown',
+                            lat: s.lastKnownLat,
+                            lng: s.lastKnownLng,
+                            lastUpdate: s.lastLocationUpdate,
+                            isCommander: s.role === 'commander' || s.role === 'senior_commander',
+                        }))}
+                        zones={zones || []}
+                        height="350px"
+                    />
+                </TacticalCard>
+            )}
 
             {/* Main Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">

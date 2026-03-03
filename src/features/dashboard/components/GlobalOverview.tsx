@@ -11,7 +11,7 @@ import { OrgTree } from '@/features/hierarchy/components/OrgTree';
 import { cn } from '@/shared/utils/cn';
 import { t } from '@/lib/i18n';
 import type { OrgNode } from '@/features/hierarchy/types';
-import { useSeniorDashboard } from '@/lib/api/hooks';
+import { useSeniorDashboard, useMyPermissions } from '@/lib/api/hooks';
 import { DynamicTacticalMap, DynamicZoneDrawer } from '@/features/map';
 import type { Vertex } from '@/features/map';
 import { apiClient } from '@/lib/api/client';
@@ -285,8 +285,17 @@ export function GlobalOverview() {
     const activeTab = searchParams.get('tab');
     // Hooks MUST be called before any conditional returns (React rules of hooks)
     const { data, isLoading } = useSeniorDashboard();
+    const { hasPermission } = useMyPermissions();
 
     if (activeTab === 'geofence') {
+        if (!hasPermission('MANAGE_ZONES')) {
+            return (
+                <div className="p-8 text-center">
+                    <p className="text-danger-red font-semibold">אין לך הרשאת ניהול אזורי גדר (MANAGE_ZONES).</p>
+                    <p className="text-text-muted text-sm mt-2">פנה לקצין האבטחה לקבלת גישה.</p>
+                </div>
+            );
+        }
         return <GeofenceManagementView />;
     }
 
@@ -339,6 +348,32 @@ export function GlobalOverview() {
                     </p>
                 </TacticalCard>
             </div>
+
+            {/* Tactical Map — Commander Locations (requires VIEW_ALL_LOCATIONS) */}
+            {hasPermission('VIEW_ALL_LOCATIONS') && (
+                <TacticalCard>
+                    <h3 className="text-sm font-semibold text-text-primary mb-3">מפה טקטית — סקירה כוללת</h3>
+                    <DynamicTacticalMap
+                        soldiers={[
+                            ...(data.commanderLocations || []).map((c: any) => ({
+                                id: c.id,
+                                name: `${c.firstName} ${c.lastName}`,
+                                rank: c.rankCode || '',
+                                status: c.currentStatus || 'unknown',
+                                lat: null,
+                                lng: null,
+                                lastUpdate: c.lastLocationUpdate,
+                                isCommander: true,
+                                encryptedLatBase64: c.encryptedLat,
+                                encryptedLngBase64: c.encryptedLng,
+                                encryptedLocNonce: c.encryptedLocNonce,
+                            })),
+                        ]}
+                        zones={[]}
+                        height="350px"
+                    />
+                </TacticalCard>
+            )}
 
             {/* Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
