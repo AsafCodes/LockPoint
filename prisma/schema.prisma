@@ -47,11 +47,20 @@ model User {
   email           String?
   phone           String?
 
-  // Soldier-specific location data
+  // Location data (soldiers use plain Float, commanders use encrypted Bytes)
   currentStatus       String   @default("unknown") // in_base | out_of_base | unknown
-  lastKnownLat        Float?
-  lastKnownLng        Float?
+  lastKnownLat        Float?   // Plain-text — soldiers only (null for commanders)
+  lastKnownLng        Float?   // Plain-text — soldiers only (null for commanders)
   lastLocationUpdate  DateTime?
+
+  // Encrypted location data — commanders only (ECIES via §9.10)
+  encryptedLat        Bytes?   // ECIES-encrypted latitude
+  encryptedLng        Bytes?   // ECIES-encrypted longitude
+  encryptedLocNonce   String?  // Nonce/IV used for the AES-GCM encryption
+
+  // Cryptographic identity (§9.10 Hardware Attestation)
+  devicePublicKey     String?  // ECDSA P-256 public key (base64 DER) — set during device registration
+  locationEncPubKey   String?  // ECDH P-256 key for encrypting own location data
 
   // Relations
   geofenceEvents  GeofenceEvent[]
@@ -60,6 +69,9 @@ model User {
   refreshTokens   RefreshToken[]
   notifications   Notification[]
   statusSnapshots StatusSnapshot[] @relation("StatusSnapshots")
+  visibilityGrants  CommanderVisibilityGrant[] @relation("VisibilityReceived")
+  visibilityTargets CommanderVisibilityGrant[] @relation("VisibilityGranted")
+  permissions       UserPermission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -194,4 +206,62 @@ model DailyUnitSummary {
 
   @@unique([unitId, date])
   @@index([unitId, date])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Commander Location Visibility — Hierarchical Access Control
+// ─────────────────────────────────────────────────────────────
+
+/// Explicit permission for a commander to view another commander's encrypted location.
+/// Includes ECDH key exchange material for end-to-end encrypted location sharing.
+model CommanderVisibilityGrant {
+  id                String   @id @default(cuid())
+  grantedToId       String   // Commander who RECEIVES visibility
+  grantedTo         User     @relation("VisibilityReceived", fields: [grantedToId], references: [id])
+  targetCommanderId String   // Commander whose location becomes VISIBLE
+  targetCommander   User     @relation("VisibilityGranted", fields: [targetCommanderId], references: [id])
+  grantedById       String   // SC-001 who authorized this grant
+  reason            String?  // Optional justification
+  viewerPublicKey   String   // ECDH public key of the viewer (required for key exchange)
+  ephemeralPubKey   String?  // Server-relayed ephemeral key for ECIES handshake
+  encryptedViewKey  Bytes?   // Viewing key encrypted with viewer's public key
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime? // Optional expiry for temporary grants
+  isActive          Boolean  @default(true) // Marks if the grant is currently active
+
+  @@unique([grantedToId, targetCommanderId, isActive])
+  @@index([grantedToId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// RBAC Permission System — Zero Trust / PoLP
+// ─────────────────────────────────────────────────────────────
+
+/// Granular permission definition (seeded at deploy time).
+/// Permissions are assigned to users via UserPermission, not directly.
+model Permission {
+  id          String  @id @default(cuid())
+  code        String  @unique    // e.g., MANAGE_VISIBILITY_GRANTS
+  label       String             // Human-readable Hebrew label
+  category    String             // LOCATION | ZONES | ADMIN | REPORTS
+  description String?
+  assignments UserPermission[]
+}
+
+/// Assignment of a specific permission to a specific user.
+/// Supports scope-limited access (via scopeUnitId) and auto-expiry.
+model UserPermission {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  permissionCode String
+  permission     Permission  @relation(fields: [permissionCode], references: [code])
+  scopeUnitId    String?     // null = global scope, unitId = subtree-only
+  grantedById    String      // Who assigned — separation of duties
+  reason         String?     // Documented justification
+  grantedAt      DateTime    @default(now())
+  expiresAt      DateTime?   // Auto-revoke after this date
+
+  @@unique([userId, permissionCode])
+  @@index([userId])
 }

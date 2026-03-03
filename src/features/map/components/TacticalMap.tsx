@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon as LeafletPolygon, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { decryptCommanderLocation } from '@/lib/crypto/location-crypto';
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -20,9 +21,19 @@ export interface MapSoldier {
     name: string;
     rank: string;
     status: 'in_base' | 'out_of_base' | 'unknown';
+    // Soldier location (plaintext from DB)
     lat: number | null;
     lng: number | null;
     lastUpdate?: string;
+    // Commander crypto payload (Encrypted from DB)
+    isCommander?: boolean;
+    encryptedLatBase64?: string;
+    encryptedLngBase64?: string;
+    encryptedLocNonce?: string;
+    serverEphemeralPubKeyBase64?: string;
+    encryptedViewKeyBase64?: string;
+    grantorId?: string;
+    targetCommanderId?: string;
 }
 
 export interface MapZone {
@@ -177,6 +188,57 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
         return points;
     }, [soldiers, zones]);
 
+    // ── Client-Side Crypto Decryption Hook ─────────────────────
+    const [decryptedSoldiers, setDecryptedSoldiers] = useState<MapSoldier[]>([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        const processCrypto = async () => {
+            const processed = await Promise.all(soldiers.map(async (s) => {
+                // If it's a plaintext soldier, return as is
+                if (!s.isCommander) return s;
+
+                // If it's a commander but missing crypto payload, skip
+                if (!s.encryptedLatBase64 || !s.encryptedLngBase64 || !s.encryptedLocNonce ||
+                    !s.serverEphemeralPubKeyBase64 || !s.encryptedViewKeyBase64 ||
+                    !s.grantorId || !s.targetCommanderId) {
+                    return s;
+                }
+
+                // Temporary mock decryption until §9.10 Hardware Attestation injects the real private key.
+                // In production, this awaits `decryptCommanderLocation` from native WebCrypto.
+                try {
+                    const result = await decryptCommanderLocation(
+                        s.encryptedLatBase64,
+                        s.encryptedLngBase64,
+                        s.encryptedLocNonce,
+                        s.serverEphemeralPubKeyBase64,
+                        s.encryptedViewKeyBase64,
+                        'MOCK_PRIVATE_KEY_WAITING_FOR_9_10',
+                        'MOCK_PUBLIC_KEY',
+                        s.grantorId,
+                        s.targetCommanderId
+                    );
+
+                    if (result) {
+                        return { ...s, lat: result.lat, lng: result.lng };
+                    }
+                } catch (e) {
+                    console.error('[TacticalMap] Native Crypto Decryption failed', e);
+                }
+                return s; // Return unmodified (missing lat/lng will drop it from the map silently)
+            }));
+
+            if (isMounted) {
+                setDecryptedSoldiers(processed);
+            }
+        };
+
+        processCrypto();
+
+        return () => { isMounted = false; };
+    }, [soldiers]);
+
     const defaultCenter = allPoints[0] || [32.08, 34.78];
 
     // Memoize marker icons
@@ -272,8 +334,8 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
                     return null;
                 })}
 
-                {/* Soldier markers */}
-                {soldiers.filter((s) => s.lat && s.lng).map((soldier) => (
+                {/* Soldier / Commander markers */}
+                {decryptedSoldiers.filter((s) => s.lat !== null && s.lng !== null).map((soldier) => (
                     <Marker
                         key={soldier.id}
                         position={[soldier.lat!, soldier.lng!]}
@@ -281,7 +343,11 @@ export function TacticalMap({ soldiers, zones, height = '320px', interactive = t
                     >
                         <Popup>
                             <div style={{ fontFamily: 'system-ui', direction: 'rtl', color: '#0a0f1a', minWidth: '120px' }}>
-                                <strong>{soldier.rank} {soldier.name}</strong>
+                                <strong>
+                                    {soldier.isCommander && <span style={{ color: '#6366f1', marginLeft: '4px' }}>[C]</span>}
+                                    {!soldier.isCommander && <span style={{ color: '#64748b', marginLeft: '4px' }}>[S]</span>}
+                                    {soldier.rank} {soldier.name}
+                                </strong>
                                 <br />
                                 <span style={{
                                     fontSize: '11px',

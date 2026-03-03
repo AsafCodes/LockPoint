@@ -17,7 +17,13 @@ export type AuditAction =
     | 'GEOFENCE_SYNC'
     | 'SUBMIT_REPORT'
     | 'VIEW_SOLDIERS'
-    | 'VIEW_DASHBOARD';
+    | 'VIEW_DASHBOARD'
+    | 'GRANT_VISIBILITY'
+    | 'REVOKE_VISIBILITY'
+    | 'GRANT_DENIED'
+    | 'PERMISSION_DENIED'
+    | 'PERMISSION_GRANTED'
+    | 'PERMISSION_REVOKED';
 
 interface AuditOptions {
     userId?: string;

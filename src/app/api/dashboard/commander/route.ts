@@ -8,6 +8,7 @@ import { prisma } from '@/lib/db';
 import { withRole, successResponse } from '@/lib/auth/middleware';
 import { logAudit, getClientInfo } from '@/lib/auth/audit';
 import type { TokenPayload } from '@/lib/auth/jwt';
+import { getAllChildUnitIds, getVisibleCommanderIds } from '@/lib/auth/commander-visibility';
 
 export const GET = withRole(['commander', 'senior_commander'], async (req: NextRequest, user: TokenPayload) => {
     const currentUser = await prisma.user.findUnique({ where: { id: user.userId } });
@@ -68,8 +69,30 @@ export const GET = withRole(['commander', 'senior_commander'], async (req: NextR
         ...getClientInfo(req),
     });
 
+    // Get visible commander locations (encrypted)
+    const visibleCommanderIds = await getVisibleCommanderIds(user.userId, user.role);
+    const commanderLocations = await prisma.user.findMany({
+        where: { id: { in: visibleCommanderIds }, encryptedLat: { not: null } },
+        select: {
+            id: true, firstName: true, lastName: true,
+            rankCode: true, unitId: true, currentStatus: true,
+            encryptedLat: true, encryptedLng: true, encryptedLocNonce: true,
+            lastLocationUpdate: true,
+            unit: { select: { name: true } },
+        },
+    });
+
+    // Map Buffer to base64 for JSON serialization
+    const serializedCommanders = commanderLocations.map((c: any) => ({
+        ...c,
+        encryptedLat: c.encryptedLat ? Buffer.from(c.encryptedLat).toString('base64') : null,
+        encryptedLng: c.encryptedLng ? Buffer.from(c.encryptedLng).toString('base64') : null,
+        isCommander: true,
+    }));
+
     return successResponse({
         stats: { total: soldiers.length, inBase, outOfBase, unknown },
+        commanderLocations: serializedCommanders,
         soldiers: soldiers.map((s: any) => ({
             ...s,
             rank: { code: s.rankCode, label: s.rankLabel, level: s.rankLevel },
@@ -91,18 +114,6 @@ export const GET = withRole(['commander', 'senior_commander'], async (req: NextR
         })),
     });
 });
-
-async function getAllChildUnitIds(unitId: string): Promise<string[]> {
-    const ids = [unitId];
-    const children = await prisma.unit.findMany({
-        where: { parentId: unitId },
-        select: { id: true },
-    });
-    for (const child of children) {
-        ids.push(...await getAllChildUnitIds(child.id));
-    }
-    return ids;
-}
 
 // Helper to build recursive tree from flat array for OrgTree
 function buildUnitTree(flatUnits: any[]): any[] {

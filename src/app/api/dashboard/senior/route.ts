@@ -8,6 +8,7 @@ import { prisma } from '@/lib/db';
 import { withRole, successResponse } from '@/lib/auth/middleware';
 import { logAudit, getClientInfo } from '@/lib/auth/audit';
 import type { TokenPayload } from '@/lib/auth/jwt';
+import { getVisibleCommanderIds } from '@/lib/auth/commander-visibility';
 
 export const GET = withRole(['senior_commander'], async (req: NextRequest, user: TokenPayload) => {
     // Get ALL soldiers
@@ -84,8 +85,30 @@ export const GET = withRole(['senior_commander'], async (req: NextRequest, user:
         ...getClientInfo(req),
     });
 
+    // Get visible commander locations (encrypted)
+    const visibleCommanderIds = await getVisibleCommanderIds(user.userId, user.role);
+    const commanderLocations = await prisma.user.findMany({
+        where: { id: { in: visibleCommanderIds }, encryptedLat: { not: null } },
+        select: {
+            id: true, firstName: true, lastName: true,
+            rankCode: true, unitId: true, currentStatus: true,
+            encryptedLat: true, encryptedLng: true, encryptedLocNonce: true,
+            lastLocationUpdate: true,
+            unit: { select: { name: true } },
+        },
+    });
+
+    // Map Buffer to base64 for JSON serialization
+    const serializedCommanders = commanderLocations.map((c: any) => ({
+        ...c,
+        encryptedLat: c.encryptedLat ? Buffer.from(c.encryptedLat).toString('base64') : null,
+        encryptedLng: c.encryptedLng ? Buffer.from(c.encryptedLng).toString('base64') : null,
+        isCommander: true,
+    }));
+
     return successResponse({
         globalStats: { total, inBase, outOfBase, unknown },
+        commanderLocations: serializedCommanders,
         units: buildUnitTree(unitStats),
         flatUnits: unitStats,
         events: events.map((e: any) => ({

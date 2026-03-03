@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -401,8 +401,62 @@ async function main() {
     });
 
     console.log('  ✅ Geofence zones created');
-    console.log('');
-    console.log('🎉 Seed complete!');
+
+    // ── RBAC Permissions (Zero Trust / PoLP) ─────────────────
+    // Permission definitions — seeded at deploy time.
+    // These define WHAT actions exist. User assignments define WHO can do them.
+
+    const permissionDefs = [
+        { code: 'MANAGE_VISIBILITY_GRANTS', label: 'ניהול הרשאות נראות מפקדים', category: 'LOCATION', description: 'יצירה וביטול הרשאות צפייה במיקום מפקדים' },
+        { code: 'MANAGE_ZONES', label: 'ניהול אזורי גדר', category: 'ZONES', description: 'יצירה, עריכה ומחיקת אזורי גדר גאוגרפיים' },
+        { code: 'VIEW_AUDIT_LOGS', label: 'צפייה בלוגים', category: 'ADMIN', description: 'צפייה ביומן ביקורת פעולות המערכת' },
+        { code: 'MANAGE_USERS', label: 'ניהול משתמשים', category: 'ADMIN', description: 'יצירה, עריכה ומחיקת משתמשים' },
+        { code: 'VIEW_ALL_LOCATIONS', label: 'צפייה בכל המיקומים', category: 'LOCATION', description: 'צפייה בכל מיקומי החיילים והמפקדים' },
+        { code: 'EXPORT_REPORTS', label: 'ייצוא דוחות', category: 'REPORTS', description: 'ייצוא דוחות PDF/Excel' },
+    ];
+
+    for (const perm of permissionDefs) {
+        await prisma.permission.upsert({
+            where: { code: perm.code },
+            update: { label: perm.label, category: perm.category, description: perm.description },
+            create: perm,
+        });
+    }
+
+    console.log('  ✅ RBAC permissions defined');
+
+    // ── Bootstrap: Assign critical permissions to SC-001 ─────
+    // The master user gets initial permissions at deploy time.
+    // Additional permissions must be granted by an authorized user via the API.
+
+    const bootstrapAssignments = [
+        { permissionCode: 'MANAGE_VISIBILITY_GRANTS', reason: 'Bootstrap — SC-001 initial deployment' },
+        { permissionCode: 'MANAGE_ZONES', reason: 'Bootstrap — SC-001 initial deployment' },
+        { permissionCode: 'VIEW_ALL_LOCATIONS', reason: 'Bootstrap — SC-001 initial deployment' },
+        { permissionCode: 'VIEW_AUDIT_LOGS', reason: 'Bootstrap — SC-001 initial deployment' },
+    ];
+
+    for (const assignment of bootstrapAssignments) {
+        await prisma.userPermission.upsert({
+            where: {
+                userId_permissionCode: {
+                    userId: masterSc.id,
+                    permissionCode: assignment.permissionCode,
+                },
+            },
+            update: {},
+            create: {
+                userId: masterSc.id,
+                permissionCode: assignment.permissionCode,
+                grantedById: masterSc.id, // Self-bootstrap (only allowed at seed time)
+                reason: assignment.reason,
+                scopeUnitId: null, // Global scope for SC-001
+            },
+        });
+    }
+
+    console.log('  ✅ SC-001 bootstrap permissions assigned');
+
     console.log('\n');
     console.log('Development Test Credentials (Password for all: LP1234):');
     console.log('  master  (SC-001)  — אסף שוחט (רואה הכל)');

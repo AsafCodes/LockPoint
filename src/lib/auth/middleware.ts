@@ -1,9 +1,11 @@
 // ─────────────────────────────────────────────────────────────
-// LockPoint — Auth Middleware (RBAC)
+// LockPoint — Auth Middleware (RBAC + Permission System)
 // ─────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, type TokenPayload } from './jwt';
+import { prisma } from '@/lib/db';
+import { logAudit } from './audit';
 
 export type AuthenticatedRequest = NextRequest & {
     user: TokenPayload;
@@ -69,5 +71,55 @@ export function withRole(
             return errorResponse('אין הרשאה לביצוע פעולה זו.', 403);
         }
         return handler(req, user);
+    });
+}
+
+/**
+ * Protect an API route — requires a valid JWT AND a specific granular permission.
+ *
+ * This is the RBAC layer that sits ON TOP of withAuth.
+ * It checks the `UserPermission` table for an active, non-expired assignment.
+ *
+ * The handler receives an additional `scopeUnitId` parameter:
+ *   - `null`   → global scope (no unit restriction)
+ *   - `string` → the user's permission is limited to this unit's subtree
+ *
+ * Failed checks are audit-logged with PERMISSION_DENIED.
+ */
+export function withPermission(
+    permissionCode: string,
+    handler: (req: NextRequest, user: TokenPayload, scopeUnitId: string | null) => Promise<NextResponse>
+) {
+    return withAuth(async (req, user) => {
+        const assignment = await prisma.userPermission.findUnique({
+            where: {
+                userId_permissionCode: {
+                    userId: user.userId,
+                    permissionCode,
+                },
+            },
+        });
+
+        // No assignment at all
+        if (!assignment) {
+            await logAudit({
+                userId: user.userId,
+                action: 'PERMISSION_DENIED',
+                detail: { required: permissionCode, reason: 'NO_ASSIGNMENT' },
+            });
+            return errorResponse('אין הרשאה לביצוע פעולה זו.', 403);
+        }
+
+        // Assignment exists but expired
+        if (assignment.expiresAt && assignment.expiresAt < new Date()) {
+            await logAudit({
+                userId: user.userId,
+                action: 'PERMISSION_DENIED',
+                detail: { required: permissionCode, reason: 'EXPIRED' },
+            });
+            return errorResponse('ההרשאה פגה. פנה לגורם מוסמך לחידוש.', 403);
+        }
+
+        return handler(req, user, assignment.scopeUnitId);
     });
 }
